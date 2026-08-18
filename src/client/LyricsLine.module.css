@@ -1,0 +1,41 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 46vw;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--dsw-alias-label-tertiary, rgba(127, 127, 127, 0.85));
+  white-space: nowrap;
+}
+
+/* pushed to the far end of the dock when configured */
+.root[data-pos="end"] {
+  margin-left: auto;
+}
+
+.icon {
+  flex: none;
+  color: var(--dsw-alias-brand-primary, #4176e6);
+}
+
+.title {
+  flex: none;
+  max-width: 30vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.sep {
+  flex: none;
+  opacity: 0.6;
+}
+
+.line {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
