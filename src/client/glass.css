@@ -1,0 +1,177 @@
+/**
+ * dsh-glass-ui — the glass look.
+ *
+ * Injected as a single <style data-plugin="dsh-glass-ui"> tag by the client
+ * half. Every value that the user can tune is a CSS variable on :root, set
+ * by JS (and pre-set by the host first-paint bootstrap).
+ *
+ * Technique (deliberately backdrop-filter-free): the fixed background layer
+ * blurs itself with `filter: blur()`, and the surface tokens are overridden
+ * to translucent values via ctx.theme.overrideTokens — the composited result
+ * is a frosted glass without touching #root's containing block (backdrop-
+ * filter would re-parent fixed descendants and break modals/sidebars).
+ *
+ * All rules are namespaced under body.dsh-glass-on (set by JS) so the plugin
+ * can be turned off cleanly.
+ */
+
+/* ---- root knobs (JS writes these; defaults shown) ---- */
+:root {
+  --glass-opacity: 0.72;       /* surface solidity, 0.1..0.95 */
+  --glass-blur: 18px;          /* background blur radius */
+  --glass-font: "";            /* font family applied to the UI */
+  --glass-font-url: "";        /* uploaded @font-face source */
+  --glass-bg-type: none;       /* none | image | video */
+  --glass-bg-image: none;      /* url(...) */
+  --glass-bg-video: none;      /* url(...) */
+  --glass-bg-mask: 0;          /* dark overlay over the wallpaper, 0..0.7 */
+  --glass-bg-fit: cover;       /* cover | contain | original */
+  --glass-anim-level: soft;    /* none | soft | strong */
+  --glass-surface-light: rgba(255, 255, 255, 0.72);
+  --glass-surface-dark: rgba(16, 16, 24, 0.72);
+}
+
+/* ---- custom font (uploaded @font-face source is injected by JS) ---- */
+body.dsh-glass-on,
+body.dsh-glass-on button,
+body.dsh-glass-on input,
+body.dsh-glass-on select,
+body.dsh-glass-on textarea {
+  font-family: var(--glass-font);
+}
+
+/* ---- background layer: always fullscreen ---- */
+#dsh-glass-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  /* soft default gradient so the glass reads even without a wallpaper */
+  background:
+    radial-gradient(1200px 800px at 82% -10%, rgba(99, 140, 255, 0.22), transparent 60%),
+    radial-gradient(1000px 700px at 8% 112%, rgba(0, 210, 180, 0.16), transparent 55%),
+    linear-gradient(165deg, rgba(65, 118, 230, 0.08), transparent 45%);
+  transition: opacity 0.7s ease, transform 0.7s ease, filter 0.7s ease;
+}
+body.dsh-glass-ready #dsh-glass-bg { opacity: 1; }
+
+#dsh-glass-bg img,
+#dsh-glass-bg video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--glass-bg-fit, cover);
+  /* fullscreen look: wallpaper stays fairly clear, surfaces carry the glass */
+  filter: blur(calc(var(--glass-blur) * 0.55)) saturate(1.12);
+  transform: scale(1.06); /* keep the blur from showing edges */
+  transition: filter 0.7s ease, opacity 0.7s ease;
+}
+
+/* contain: whole image visible, letterboxed */
+body[data-glass-fit="contain"] #dsh-glass-bg img,
+body[data-glass-fit="contain"] #dsh-glass-bg video {
+  object-fit: contain;
+}
+
+/* original: no scaling, centered at natural size */
+body[data-glass-fit="original"] #dsh-glass-bg img,
+body[data-glass-fit="original"] #dsh-glass-bg video {
+  object-fit: none;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+/* readability overlay over the wallpaper (light theme: white, dark: black) */
+#dsh-glass-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, var(--glass-bg-mask));
+  transition: opacity 0.7s ease;
+}
+body[data-ds-dark-theme] #dsh-glass-bg::after {
+  background: rgba(0, 0, 0, var(--glass-bg-mask));
+}
+
+/* ---- frosted scrollbars (tokens from the theme's scrollbar spec) ---- */
+body.dsh-glass-on {
+  --dsh-scrollbar-thumb: rgba(127, 127, 127, 0.38);
+  --dsh-scrollbar-thumb-hover: rgba(127, 127, 127, 0.55);
+}
+
+/* ---- animations: three levels ---- */
+
+/* soft (default): shell fades in, controls transition gently */
+@keyframes dsh-glass-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+body.dsh-glass-anim-soft #root > *,
+body.dsh-glass-anim-strong #root > * {
+  animation: dsh-glass-fade 0.45s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+
+body.dsh-glass-anim-soft button,
+body.dsh-glass-anim-soft [role="button"],
+body.dsh-glass-anim-strong button,
+body.dsh-glass-anim-strong [role="button"] {
+  transition: transform 0.18s ease, background-color 0.18s ease,
+    opacity 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+body.dsh-glass-anim-soft #dsh-glass-bg,
+body.dsh-glass-anim-soft #dsh-glass-bg img,
+body.dsh-glass-anim-soft #dsh-glass-bg video,
+body.dsh-glass-anim-strong #dsh-glass-bg,
+body.dsh-glass-anim-strong #dsh-glass-bg img,
+body.dsh-glass-anim-strong #dsh-glass-bg video {
+  transition-duration: 0.9s;
+}
+
+/* strong: gentle lift + brand glow on hover, slower wallpaper crossfades */
+@keyframes dsh-glass-pop {
+  0% { transform: translateY(2px) scale(0.985); opacity: 0.6; }
+  100% { transform: none; opacity: 1; }
+}
+
+body.dsh-glass-anim-strong #root > * {
+  animation: dsh-glass-pop 0.5s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+
+body.dsh-glass-anim-strong button:hover,
+body.dsh-glass-anim-strong [role="button"]:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 18px rgba(99, 140, 255, 0.22);
+}
+
+body.dsh-glass-anim-strong #dsh-glass-bg,
+body.dsh-glass-anim-strong #dsh-glass-bg img,
+body.dsh-glass-anim-strong #dsh-glass-bg video {
+  transition-duration: 1.4s;
+}
+
+/* none: everything static */
+body.dsh-glass-anim-none #root > * { animation: none !important; }
+body.dsh-glass-anim-none #dsh-glass-bg,
+body.dsh-glass-anim-none #dsh-glass-bg img,
+body.dsh-glass-anim-none #dsh-glass-bg video { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.dsh-glass-anim-soft #root > *,
+  body.dsh-glass-anim-strong #root > * { animation: none; }
+  body.dsh-glass-anim-soft #dsh-glass-bg,
+  body.dsh-glass-anim-soft #dsh-glass-bg img,
+  body.dsh-glass-anim-soft #dsh-glass-bg video,
+  body.dsh-glass-anim-strong #dsh-glass-bg,
+  body.dsh-glass-anim-strong #dsh-glass-bg img,
+  body.dsh-glass-anim-strong #dsh-glass-bg video { transition: none; }
+}
