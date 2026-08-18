@@ -1,0 +1,6 @@
+# dsh bundle patch: inserts this plugin into a profile's layer stack.
+# `id` is the stable row identity in the composed config tree; `name` is the
+# npm package name the loader resolves. Later layers override by id.
+- insert:
+    - id: dsh-glass-ui
+      name: dsh-glass-ui

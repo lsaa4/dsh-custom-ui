@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+
+# NOTE: lib/ and client/ (build artifacts) are intentionally tracked:
+# GitHub distribution installs from source without any build step, so the
+# built halves must be committed. Rebuild before committing:
+#   pnpm build
