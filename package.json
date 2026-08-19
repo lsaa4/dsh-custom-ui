@@ -1,6 +1,6 @@
 {
   "name": "dsh-glass-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Glassmorphism UI theme for DeepSeek Harness web: frosted-glass surfaces, adjustable opacity/blur, custom fonts, background images & live video wallpapers with carousel, NetEase Cloud Music player with dock lyrics, custom CSS and soft animations. DSH Web 毛玻璃 UI 主题：可调透明度/模糊、自定义字体、背景图与动态壁纸（多图轮播）、网易云音乐播放与歌词、自定义 CSS、柔和动画。",
   "type": "module",
   "main": "lib/index.js",
