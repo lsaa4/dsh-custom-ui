@@ -2,6 +2,8 @@
 
 为 [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness) Web 打造的**毛玻璃 UI 主题插件**：整体布局保持原样，风格替换为透明毛玻璃；在 **设置 → 自定义UI设计** 中可实时调节。
 
+![界面预览](docs/screenshot.png)
+
 ## 功能
 
 - **毛玻璃风格**：界面表面半透明 + 背景模糊（背景层 `filter: blur`，不改动布局层级，安全无副作用）
