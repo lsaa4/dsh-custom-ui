@@ -25,6 +25,8 @@ export interface NeteasePanelProps {
   t: Translate
   lyricPos: LyricPos
   onLyricPos: (pos: LyricPos) => void
+    mediaDisplay: boolean
+    onMediaDisplay: (show: boolean) => void
   neteaseProxy: string
   onNeteaseProxy: (proxy: string) => void
   neteaseApiBase: string
@@ -43,7 +45,7 @@ function fmtTime(ms: number | undefined): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase }: NeteasePanelProps): JSX.Element {
+export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase }: NeteasePanelProps): JSX.Element {
   const [account, setAccount] = useState<NeteaseAccount | null | 'loading'>('loading')
   const [qrKey, setQrKey] = useState<string | null>(null)
   const [qrImg, setQrImg] = useState<string | null>(null)
@@ -109,6 +111,16 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
     setPolling(false)
   }
 
+  async function fetchAccountAfterLogin(): Promise<NeteaseAccount> {
+    // The session cookie may need a moment to propagate on the remote API side.
+    for (let i = 0; i < 5; i++) {
+      const acc = await getAccount()
+      if (acc.loggedIn && acc.uid !== undefined) return acc
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    return getAccount()
+  }
+
   function scheduleQrPoll(key: string): void {
     if (!mountedRef.current) return
     if (pollTimer.current !== undefined) window.clearTimeout(pollTimer.current)
@@ -129,7 +141,7 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
           setAccount(acc)
           setToast(t('lyricLoginOk', { name: status.nickname ?? '' }))
           if (acc.uid === undefined) {
-            const fresh = await getAccount()
+            const fresh = await fetchAccountAfterLogin()
             if (!mountedRef.current) return
             setAccount(fresh.loggedIn ? fresh : acc)
             if (fresh.uid !== undefined) {
@@ -157,6 +169,9 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
     clearQrPoll()
     setQrKey(null)
     setQrImg(null)
+      // Start from a clean cookie state so a stale/partial session cannot break
+      // the new QR login.
+      await logout().catch(() => undefined)
     setBusy(true)
     setQrState(t('lyricQrLoading'))
     try {
@@ -222,7 +237,7 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
             setAccount(acc)
             setToast(t('lyricLoginOk', { name: status.nickname ?? '' }))
             if (acc.uid === undefined) {
-              const fresh = await getAccount().catch(() => null).catch(() => null)
+              const fresh = await fetchAccountAfterLogin().catch(() => null).catch(() => null)
               if (fresh !== null) setAccount(fresh.loggedIn ? fresh : acc)
               if (fresh.uid !== undefined) {
                 void fetchPlaylists(fresh.uid).then(setPlaylists)
@@ -398,6 +413,24 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
         </div>
       </div>
 
+        <div className={styles.row}>
+          <span className={styles.fieldLabel}>{t('mediaDisplayLabel')}</span>
+          <div className={styles.pills}>
+            <Pill
+              active={mediaDisplay}
+              onClick={() => onMediaDisplay(true)}
+            >
+              {t('mediaDisplayOn')}
+            </Pill>
+            <Pill
+              active={!mediaDisplay}
+              onClick={() => onMediaDisplay(false)}
+            >
+              {t('mediaDisplayOff')}
+            </Pill>
+          </div>
+        </div>
+
       {/* ---- login / account ---- */}
       {account === 'loading' ? (
         <p className={styles.hint}>{t('lyricLoading')}</p>
@@ -524,7 +557,7 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
                 </Button>
               </div>
               <ul className={styles.songList}>
-                {songList.slice(0, 50).map((song) => (
+                {songList.map((song) => (
                   <li key={song.id} className={styles.songRow}>
                     <button
                       type="button"

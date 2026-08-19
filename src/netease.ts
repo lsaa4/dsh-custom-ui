@@ -43,13 +43,27 @@ function agentFor(proxyUrl: string): HttpAgent | undefined {
   return proxyAgentCache.agent
 }
 
+function normalizeSetCookiePair(raw: string): string[] {
+  return raw
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => s !== '' && s.includes('=') && !/^(path|domain|expires|max-age|httponly|secure|samesite)=/i.test(s))
+}
+
 function setCookieList(headers: import('node-fetch').Headers): string[] {
-  const raw = (headers as unknown as { raw?: () => Record<string, string[]> }).raw
-  if (typeof raw === 'function') {
-    return raw.call(headers)['set-cookie'] ?? []
+  const anyHeaders = headers as unknown as {
+    raw?: () => Record<string, string[]>
+    getSetCookie?: () => string[]
+  }
+  // Modern fetch / undici exposes getSetCookie(); prefer it when available.
+  if (typeof anyHeaders.getSetCookie === 'function') {
+    return anyHeaders.getSetCookie().flatMap(normalizeSetCookiePair)
+  }
+  if (typeof anyHeaders.raw === 'function') {
+    return (anyHeaders.raw()['set-cookie'] ?? []).flatMap(normalizeSetCookiePair)
   }
   const single = headers.get('set-cookie')
-  return single === null ? [] : [single]
+  return single === null ? [] : normalizeSetCookiePair(single)
 }
 
 
@@ -117,7 +131,7 @@ function writeCookie(cookie: string): void {
   renameSync(tmp, cookiePath())
 }
 
-function clearCookie(): void {
+export function clearCookie(): void {
   try {
     writeFileSync(cookiePath(), JSON.stringify({ cookie: '' }), 'utf8')
   } catch {
@@ -179,8 +193,8 @@ async function remoteWeapiRequest(
   const d = data as Record<string, unknown>
   switch (path) {
     case '/weapi/login/qrcode/unikey': {
-      const j = await remoteJson(`${apiBase}/login/qr/key`, headers)
-      const key = (j.data as { unikey?: string } | undefined)?.unikey ?? ''
+      const j = await remoteJson(`${apiBase}/login/qr/key`, {})
+      const key = (j.data as { unikey?: string } | undefined)?.unikey ?? (typeof j.unikey === 'string' ? j.unikey : '')
       let qrimg = ''
       if (key !== '') {
         try {
@@ -189,7 +203,7 @@ async function remoteWeapiRequest(
             headers,
           )
           const data = img.data as { qrimg?: string } | undefined
-          qrimg = typeof data?.qrimg === 'string' ? data.qrimg : ''
+          qrimg = typeof data?.qrimg === 'string' ? data.qrimg : (typeof img.qrimg === 'string' ? img.qrimg : '')
         } catch {
           qrimg = '' // client falls back to local rendering
         }
@@ -198,13 +212,28 @@ async function remoteWeapiRequest(
     }
     case '/weapi/login/qrcode/client/login': {
       const key = String(d.key ?? '')
-      const j = await remoteJson(`${apiBase}/login/qr/check?key=${encodeURIComponent(key)}`, headers)
+      const j = await remoteJson(`${apiBase}/login/qr/check?key=${encodeURIComponent(key)}`, {})
       const code = Number(j.code ?? 801)
+        const qrData = (j.data ?? {}) as { cookie?: unknown; nickname?: unknown; avatarUrl?: unknown }
+        const cookie = typeof j.cookie === 'string' && j.cookie !== ''
+          ? j.cookie
+          : typeof qrData.cookie === 'string'
+            ? qrData.cookie
+            : ''
+        const nickname = typeof j.nickname === 'string' ? j.nickname : typeof qrData.nickname === 'string' ? qrData.nickname : undefined
+        const avatarUrl = typeof j.avatarUrl === 'string' ? j.avatarUrl : typeof qrData.avatarUrl === 'string' ? qrData.avatarUrl : undefined
       // 803 = confirmed: NeteaseCloudMusicApi returns the session cookie inline
-      if (code === 803 && typeof j.cookie === 'string' && j.cookie !== '') {
+      if (code === 803 && cookie !== '') {
+          // NeteaseCloudMusicApi returns a complete cookie string, not a
+          // Set-Cookie header. Split it into individual `name=value` pairs so
+          // mergeCookies keeps every session cookie instead of only the first.
+          const cookies = cookie
+            .split(';')
+            .map((c) => c.trim())
+            .filter((c) => c !== '' && c.includes('=') && !/^(path|domain|expires|max-age|httponly|secure|samesite)=/i.test(c))
         return {
-          json: { code: 803, nickname: j.nickname },
-          setCookie: [j.cookie],
+          json: { code: 803, nickname, avatarUrl },
+          setCookie: cookies,
         }
       }
       return { json: { code }, setCookie: [] }
@@ -251,20 +280,32 @@ async function weapiRequest(path: string, data: unknown, cookie: string): Promis
 }> {
   const apiBase = readApiBase()
   if (apiBase !== '') {
+      try {
     return await remoteWeapiRequest(apiBase, path, data as Record<string, unknown>, cookie)
+      } catch (err) {
+        // If the remote API server fails, fall back to the official endpoint.
+        // This keeps cookie login / account checks working when the remote is down.
+        console.warn(`[dsh-glass-ui] remote netease api failed, fallback to official: ${err instanceof Error ? err.message : String(err)}`)
+      }
   }
   const form = new URLSearchParams()
   const enc = weapiParams(data)
   form.set('params', enc.params)
   form.set('encSecKey', enc.encSecKey)
+    // QR login endpoints should not carry a stale saved cookie; a fresh login
+    // must start from a clean state.
+    const requestCookie = path.startsWith('/weapi/login/qrcode/') ? '' : cookie
   const proxy = readProxy()
   const agent = agentFor(proxy)
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
+        'referer': 'https://music.163.com/',
       'user-agent': NETBASE_UA,
-      ...(cookie !== '' ? { cookie } : {}),
+      ...(requestCookie !== ''
+          ? { cookie: `os=pc; appver=2.9.7; ${requestCookie}` }
+          : { cookie: 'os=pc; appver=2.9.7' }),
     },
     body: form,
     ...(agent !== undefined ? { agent } : {}),

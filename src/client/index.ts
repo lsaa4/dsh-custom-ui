@@ -21,7 +21,7 @@ import type { Translate } from './locales.ts'
 import { GlassPanel } from './GlassPanel.tsx'
 import { LyricsLine } from './LyricsLine.tsx'
 import { initLyricPos } from './lyrics.ts'
-import { mountMusicControls } from './musicControls.ts'
+import { mountMusicControls, setMediaDisplayEnabled } from './musicControls.ts'
 
 const NS = 'dsh-glass-ui'
 
@@ -123,10 +123,12 @@ export function apply(ctx: GlassClientContext): void {
       .then((config) => {
         if (disposed) return // fiber torn down while the fetch was in flight
         initLyricPos(config.lyricPos)
+          setMediaDisplayEnabled(config.mediaDisplay)
         engine.apply(config)
       })
       .catch(() => {
         if (!disposed) engine.apply({ ...DEFAULT_CONFIG } as GlassConfig)
+          if (!disposed) setMediaDisplayEnabled(true)
       })
     return () => {
       disposed = true

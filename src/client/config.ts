@@ -34,6 +34,8 @@ export interface GlassConfig {
   customCss: string
   /** Lyric line position in the composer dock. */
   lyricPos: 'inline' | 'end' | 'hidden'
+    /** Whether to show the compact media player card in the web UI. */
+    mediaDisplay: boolean
   /** HTTP proxy for NetEase requests (e.g. http://127.0.0.1:7890). */
   neteaseProxy: string
   /** Remote NeteaseCloudMusicApi server base URL (public/self-hosted instance). */
@@ -56,6 +58,7 @@ export const DEFAULT_CONFIG: GlassConfig = {
   animLevel: 'soft',
   customCss: '',
   lyricPos: 'inline',
+    mediaDisplay: true,
   neteaseProxy: '',
   neteaseApiBase: '',
 }
@@ -113,3 +116,9 @@ export async function deleteMedia(url: string): Promise<void> {
   const res = await fetch(url, { method: 'DELETE' })
   if (!res.ok) throw new Error(`delete media: HTTP ${res.status}`)
 }
+
+export async function clearPersonalData(): Promise<void> {
+  const res = await fetch('/glass-ui/clear-data', { method: 'POST' })
+  if (!res.ok) throw new Error(`clear data: HTTP ${res.status}`)
+}
+

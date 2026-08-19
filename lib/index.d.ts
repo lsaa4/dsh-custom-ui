@@ -45,6 +45,8 @@ export interface GlassConfig {
     customCss: string;
     /** Lyric line position in the composer dock. */
     lyricPos: 'inline' | 'end' | 'hidden';
+    /** Whether to show the compact media player card in the web UI. */
+    mediaDisplay: boolean;
     /** HTTP proxy for NetEase requests (e.g. http://127.0.0.1:7890). */
     neteaseProxy: string;
     /** Remote NeteaseCloudMusicApi server base URL (public/self-hosted instance). */

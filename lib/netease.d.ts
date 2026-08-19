@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+export declare function clearCookie(): void;
 export interface NeteaseRoutesHost {
     register(route: {
         kind: 'exact' | 'prefix';

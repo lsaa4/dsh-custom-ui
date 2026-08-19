@@ -5,7 +5,8 @@ import { Button, Input, Pill, Toast } from '@deepseek-ai/dsh-client-ui-primitive
 import { CUSTOM_FONT_FAMILY, type GlassEngine } from './engine.ts'
 import {
   DEFAULT_CONFIG,
-  deleteMedia,
+  clearPersonalData,
+    deleteMedia,
   loadConfig,
   normalizeConfig,
   saveConfig,
@@ -17,7 +18,8 @@ import {
 import { FONT_PRESETS, type Translate } from './locales.ts'
 import styles from './GlassPanel.module.css'
 import { NeteasePanel } from './NeteasePanel.tsx'
-import { setLyricPos, type LyricPos } from './lyrics.ts'
+import { getMediaDisplayEnabled, setMediaDisplayEnabled } from './musicControls.ts'
+import { playback, setLyricPos, type LyricPos } from './lyrics.ts'
 
 export interface GlassPanelProps {
   t: Translate
@@ -50,7 +52,7 @@ function mediaName(url: string): string {
 }
 
 export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
-  const [config, setConfig] = useState<GlassConfig>({ ...DEFAULT_CONFIG })
+  const [config, setConfig] = useState<GlassConfig>({ ...DEFAULT_CONFIG, mediaDisplay: getMediaDisplayEnabled() })
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [uploading, setUploading] = useState<BgType | 'font' | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -70,11 +72,13 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
         if (cancelled) return
         setConfig(cfg)
         engine.apply(cfg)
+          setMediaDisplayEnabled(cfg.mediaDisplay)
       })
       .catch(() => {
         if (cancelled) return
         engine.apply({ ...DEFAULT_CONFIG })
       })
+          setMediaDisplayEnabled(true)
     return () => {
       cancelled = true
       window.clearTimeout(saveTimer.current)
@@ -86,6 +90,7 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
   function update(next: GlassConfig): void {
     setConfig(next)
     engine.apply(next)
+      setMediaDisplayEnabled(next.mediaDisplay)
     setSaveState('saving')
     window.clearTimeout(saveTimer.current)
     const seq = ++saveSeq.current
@@ -202,12 +207,34 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
       .then(() => {
         setConfig(next)
         engine.apply(next)
+          setMediaDisplayEnabled(next.mediaDisplay)
         setSaveState('saved')
         setToast(t('resetDone'))
       })
       .catch((err: unknown) => {
         setToast(t('saveFail', { error: err instanceof Error ? err.message : String(err) }))
       })
+  }
+
+  async function clearData(): Promise<void> {
+    if (!window.confirm(t('clearDataConfirm'))) return
+    window.clearTimeout(saveTimer.current)
+    setSaveState('saving')
+    try {
+      await clearPersonalData()
+      playback.stop()
+      const next = { ...DEFAULT_CONFIG }
+      setLyricPos(next.lyricPos)
+      setConfig(next)
+      engine.apply(next)
+        setMediaDisplayEnabled(next.mediaDisplay)
+      setSaveState('saved')
+      setToast(t('clearDataDone'))
+        window.setTimeout(() => window.location.reload(), 800)
+    } catch (err) {
+      setSaveState('fail')
+      setToast(t('clearDataFail', { error: err instanceof Error ? err.message : String(err) }))
+    }
   }
 
   function exportConfig(): void {
@@ -228,6 +255,7 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
       await saveConfig(next)
       setConfig(next)
       engine.apply(next)
+        setMediaDisplayEnabled(next.mediaDisplay)
       setSaveState('saved')
       setToast(t('importDone'))
     } catch (err) {
@@ -474,6 +502,8 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
           setLyricPos(pos)
           update({ ...config, lyricPos: pos })
         }}
+          mediaDisplay={config.mediaDisplay}
+          onMediaDisplay={(show: boolean) => update({ ...config, mediaDisplay: show })}
         neteaseProxy={config.neteaseProxy}
         onNeteaseProxy={(proxy: string) => update({ ...config, neteaseProxy: proxy })}
         neteaseApiBase={config.neteaseApiBase}
@@ -506,6 +536,9 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
           <Button variant="outline" onClick={() => void reset()}>
             {t('resetButton')}
           </Button>
+            <Button variant="outline" onClick={() => void clearData()}>
+              {t('clearDataButton')}
+            </Button>
           <span className={styles.saveState} data-state={saveState}>
             {saveState === 'saving' && t('saving')}
             {saveState === 'saved' && t('saved')}

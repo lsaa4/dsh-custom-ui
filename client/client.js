@@ -329,6 +329,7 @@ const DEFAULT_CONFIG = {
 	animLevel: "soft",
 	customCss: "",
 	lyricPos: "inline",
+	mediaDisplay: true,
 	neteaseProxy: "",
 	neteaseApiBase: ""
 };
@@ -371,6 +372,10 @@ async function uploadMedia(blob, kind) {
 async function deleteMedia(url) {
 	const res = await fetch(url, { method: "DELETE" });
 	if (!res.ok) throw new Error(`delete media: HTTP ${res.status}`);
+}
+async function clearPersonalData() {
+	const res = await fetch("/glass-ui/clear-data", { method: "POST" });
+	if (!res.ok) throw new Error(`clear data: HTTP ${res.status}`);
 }
 //#endregion
 //#region src/client/locales.ts
@@ -429,6 +434,10 @@ const zh = {
 	resetTitle: "重置",
 	resetButton: "恢复默认设置",
 	resetDone: "已恢复默认",
+	clearDataButton: "清除个人数据",
+	clearDataConfirm: "确定要清除所有个人数据吗？这会删除网易云登录信息、壁纸/字体等已上传媒体，并将外观恢复默认。",
+	clearDataDone: "个人数据已清除",
+	clearDataFail: "清除失败：{error}",
 	saving: "保存中…",
 	saved: "已保存",
 	saveFail: "保存失败：{error}",
@@ -440,6 +449,9 @@ const zh = {
 	lyricPosInline: "信息栏内",
 	lyricPosEnd: "信息栏最右",
 	lyricPosHidden: "隐藏",
+	mediaDisplayLabel: "媒体显示",
+	mediaDisplayOn: "显示",
+	mediaDisplayOff: "隐藏",
 	lyricQrLogin: "扫码登录网易云",
 	lyricQrLoading: "正在生成二维码…",
 	lyricQrScan: "请用网易云 App 扫码，并在手机上确认",
@@ -527,6 +539,10 @@ const en = {
 	resetTitle: "Reset",
 	resetButton: "Restore defaults",
 	resetDone: "Defaults restored",
+	clearDataButton: "Clear personal data",
+	clearDataConfirm: "Clear all personal data? This will remove NetEase login, uploaded media (wallpapers/fonts), and restore the default look.",
+	clearDataDone: "Personal data cleared",
+	clearDataFail: "Clear failed: {error}",
 	saving: "Saving…",
 	saved: "Saved",
 	saveFail: "Save failed: {error}",
@@ -538,6 +554,9 @@ const en = {
 	lyricPosInline: "In the info bar",
 	lyricPosEnd: "Right end of info bar",
 	lyricPosHidden: "Hidden",
+	mediaDisplayLabel: "Media display",
+	mediaDisplayOn: "Show",
+	mediaDisplayOff: "Hide",
 	lyricQrLogin: "QR login with NetEase",
 	lyricQrLoading: "Generating QR code…",
 	lyricQrScan: "Scan with the NetEase app and confirm on your phone",
@@ -3501,7 +3520,7 @@ function fmtTime(ms) {
 	const s = Math.floor(ms / 1e3);
 	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
-function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase }) {
+function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase }) {
 	const [account, setAccount] = (0, react.useState)("loading");
 	const [qrKey, setQrKey] = (0, react.useState)(null);
 	const [qrImg, setQrImg] = (0, react.useState)(null);
@@ -3558,6 +3577,14 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 		}
 		setPolling(false);
 	}
+	async function fetchAccountAfterLogin() {
+		for (let i = 0; i < 5; i++) {
+			const acc = await getAccount();
+			if (acc.loggedIn && acc.uid !== void 0) return acc;
+			await new Promise((resolve) => setTimeout(resolve, 500));
+		}
+		return getAccount();
+	}
 	function scheduleQrPoll(key) {
 		if (!mountedRef.current) return;
 		if (pollTimer.current !== void 0) window.clearTimeout(pollTimer.current);
@@ -3578,7 +3605,7 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 					setAccount(acc);
 					setToast(t("lyricLoginOk", { name: status.nickname ?? "" }));
 					if (acc.uid === void 0) {
-						const fresh = await getAccount();
+						const fresh = await fetchAccountAfterLogin();
 						if (!mountedRef.current) return;
 						setAccount(fresh.loggedIn ? fresh : acc);
 						if (fresh.uid !== void 0) fetchPlaylists(fresh.uid).then((list) => {
@@ -3601,6 +3628,7 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 		clearQrPoll();
 		setQrKey(null);
 		setQrImg(null);
+		await logout().catch(() => void 0);
 		setBusy(true);
 		setQrState(t("lyricQrLoading"));
 		try {
@@ -3762,6 +3790,24 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 					}, pos.id))
 				})]
 			}),
+			/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+				className: NeteasePanel_module_default.row,
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+					className: NeteasePanel_module_default.fieldLabel,
+					children: t("mediaDisplayLabel")
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+					className: NeteasePanel_module_default.pills,
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Pill, {
+						active: mediaDisplay,
+						onClick: () => onMediaDisplay(true),
+						children: t("mediaDisplayOn")
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Pill, {
+						active: !mediaDisplay,
+						onClick: () => onMediaDisplay(false),
+						children: t("mediaDisplayOff")
+					})]
+				})]
+			}),
 			account === "loading" ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
 				className: NeteasePanel_module_default.hint,
 				children: t("lyricLoading")
@@ -3909,7 +3955,7 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 						})
 					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("ul", {
 						className: NeteasePanel_module_default.songList,
-						children: songList.slice(0, 50).map((song) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)("li", {
+						children: songList.map((song) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)("li", {
 							className: NeteasePanel_module_default.songRow,
 							children: /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("button", {
 								type: "button",
@@ -3989,6 +4035,241 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 	});
 }
 //#endregion
+//#region src/client/musicControls.ts
+/**
+* Lightweight DOM music controls that sit below the session-log button.
+*
+* We intentionally keep this outside React: the DSH slot API does not expose a
+* dedicated slot for this position in every version, so this mounts a small
+* player card near the session-log trigger (or as a fixed bottom-left fallback
+* while the trigger is still mounting).
+*/
+const CONTAINER_CLASS = "dsh-glass-music-controls";
+const FIXED_CLASS = "dsh-glass-music-controls--fixed";
+let mediaDisplayEnabled = true;
+const mediaDisplayListeners = /* @__PURE__ */ new Set();
+function setMediaDisplayEnabled(enabled) {
+	if (mediaDisplayEnabled === enabled) return;
+	mediaDisplayEnabled = enabled;
+	for (const listener of mediaDisplayListeners) listener();
+}
+function getMediaDisplayEnabled() {
+	return mediaDisplayEnabled;
+}
+function subscribeMediaDisplay(listener) {
+	mediaDisplayListeners.add(listener);
+	return () => mediaDisplayListeners.delete(listener);
+}
+function findSessionLogButton() {
+	for (const selector of [
+		"button[aria-label=\"Session log\"]",
+		"button[aria-label=\"Session Log\"]",
+		"button[aria-label=\"session log\"]",
+		"button[aria-label*=\"session log\"]",
+		"button[aria-label*=\"Session Log\"]",
+		"button[aria-label=\"会话日志\"]",
+		"button[aria-label*=\"会话日志\"]",
+		"button[title=\"Session log\"]",
+		"button[title=\"Session Log\"]",
+		"button[title*=\"session log\"]",
+		"button[title*=\"Session Log\"]",
+		"button[title=\"会话日志\"]",
+		"button[title*=\"会话日志\"]",
+		"[data-testid=\"session-log\"]",
+		"[data-testid=\"session_log\"]",
+		".session-log"
+	]) {
+		const el = document.querySelector(selector);
+		if (el !== null) return el;
+	}
+	return Array.from(document.querySelectorAll("button, [role=\"button\"]")).find((el) => {
+		const text = (el.textContent ?? "").toLowerCase();
+		return text.includes("session log") || text.includes("会话日志") || text.includes("会话记录");
+	}) ?? null;
+}
+function createButton(label, title) {
+	const button = document.createElement("button");
+	button.type = "button";
+	button.textContent = label;
+	button.title = title;
+	button.setAttribute("aria-label", title);
+	return button;
+}
+function formatTime(seconds) {
+	if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+	const s = Math.floor(seconds);
+	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+/**
+* Mount the player card below the session-log button and return a disposer.
+* The card is visible whenever a song is loaded (playing or paused).
+*/
+function mountMusicControls(t) {
+	const container = document.createElement("div");
+	container.className = CONTAINER_CLASS;
+	container.style.display = "none";
+	const coverWrap = document.createElement("div");
+	coverWrap.className = "dsh-glass-music-cover";
+	const coverPlaceholder = document.createElement("span");
+	coverPlaceholder.className = "dsh-glass-music-cover-placeholder";
+	coverPlaceholder.textContent = "♪";
+	const coverImg = document.createElement("img");
+	coverImg.alt = "";
+	coverImg.addEventListener("error", () => {
+		coverImg.style.display = "none";
+		coverPlaceholder.style.display = "flex";
+	});
+	coverWrap.append(coverImg, coverPlaceholder);
+	const progressWrap = document.createElement("div");
+	progressWrap.className = "dsh-glass-music-progress";
+	const progressInput = document.createElement("input");
+	progressInput.type = "range";
+	progressInput.min = "0";
+	progressInput.max = "1000";
+	progressInput.step = "1";
+	progressInput.value = "0";
+	progressInput.setAttribute("aria-label", "Progress");
+	const timeWrap = document.createElement("div");
+	timeWrap.className = "dsh-glass-music-times";
+	const currentTime = document.createElement("span");
+	currentTime.className = "dsh-glass-music-time-current";
+	currentTime.textContent = "0:00";
+	const totalTime = document.createElement("span");
+	totalTime.className = "dsh-glass-music-time-total";
+	totalTime.textContent = "0:00";
+	timeWrap.append(currentTime, totalTime);
+	progressWrap.append(progressInput, timeWrap);
+	const controls = document.createElement("div");
+	controls.className = "dsh-glass-music-buttons";
+	const prevButton = createButton("⏮", t("prevTrack"));
+	const toggleButton = createButton("⏸", t("lyricPause"));
+	const nextButton = createButton("⏭", t("nextTrack"));
+	const volumeWrap = document.createElement("label");
+	volumeWrap.className = "dsh-glass-volume";
+	volumeWrap.title = t("volumeLabel");
+	const volumeIcon = document.createElement("span");
+	volumeIcon.textContent = "🔊";
+	const volumeInput = document.createElement("input");
+	volumeInput.type = "range";
+	volumeInput.min = "0";
+	volumeInput.max = "1";
+	volumeInput.step = "0.05";
+	volumeInput.value = String(playback.getSnapshot().volume);
+	volumeInput.setAttribute("aria-label", t("volumeLabel"));
+	volumeWrap.append(volumeIcon, volumeInput);
+	controls.append(prevButton, toggleButton, nextButton, volumeWrap);
+	container.append(coverWrap, progressWrap, controls);
+	const disposers = [];
+	let mediaEnabled = getMediaDisplayEnabled();
+	const update = () => {
+		const snap = playback.getSnapshot();
+		const visible = snap.song !== null;
+		container.style.display = visible && mediaEnabled ? "flex" : "none";
+		const cover = snap.song?.cover ?? "";
+		if (cover !== "") {
+			coverImg.src = cover;
+			coverImg.style.display = "block";
+			coverPlaceholder.style.display = "none";
+		} else {
+			coverImg.removeAttribute("src");
+			coverImg.style.display = "none";
+			coverPlaceholder.style.display = "flex";
+		}
+		const duration = Number.isFinite(snap.duration) ? snap.duration : 0;
+		const progress = duration > 0 ? Math.min(1e3, Math.max(0, snap.time / duration * 1e3)) : 0;
+		if (document.activeElement !== progressInput) progressInput.value = String(Math.round(progress));
+		currentTime.textContent = formatTime(snap.time);
+		totalTime.textContent = formatTime(duration);
+		progressInput.disabled = duration <= 0;
+		toggleButton.textContent = snap.playing ? "⏸" : "▶";
+		toggleButton.title = snap.playing ? t("lyricPause") : t("lyricPlay");
+		toggleButton.setAttribute("aria-label", toggleButton.title);
+		prevButton.disabled = !visible || snap.queueIndex <= 0;
+		nextButton.disabled = !visible || snap.queueIndex < 0 || snap.queueIndex >= snap.queue.length - 1;
+		if (document.activeElement !== volumeInput) volumeInput.value = String(snap.volume);
+	};
+	const unsub = playback.subscribe(update);
+	disposers.push(unsub);
+	const unsubMedia = subscribeMediaDisplay(() => {
+		mediaEnabled = getMediaDisplayEnabled();
+		update();
+	});
+	disposers.push(unsubMedia);
+	prevButton.addEventListener("click", () => playback.previous());
+	nextButton.addEventListener("click", () => playback.next());
+	toggleButton.addEventListener("click", () => playback.toggle());
+	volumeInput.addEventListener("input", () => playback.setVolume(Number(volumeInput.value)));
+	progressInput.addEventListener("input", () => {
+		const snap = playback.getSnapshot();
+		const duration = Number.isFinite(snap.duration) ? snap.duration : 0;
+		if (duration > 0) playback.seek(Number(progressInput.value) / 1e3 * duration);
+	});
+	const tryAttach = () => {
+		const sessionLog = findSessionLogButton();
+		if (sessionLog === null) return false;
+		const rect = sessionLog.getBoundingClientRect();
+		container.style.position = "fixed";
+		container.style.top = `${rect.bottom + 30}px`;
+		const cardWidth = container.offsetWidth || 180;
+		const maxLeft = window.innerWidth - cardWidth - 8;
+		container.style.left = `${Math.max(8, Math.min(rect.left, maxLeft))}px`;
+		container.style.zIndex = "1000";
+		if (container.parentElement !== document.body) document.body.appendChild(container);
+		container.classList.add(FIXED_CLASS);
+		return true;
+	};
+	if (!tryAttach()) {
+		document.body.appendChild(container);
+		container.style.position = "fixed";
+		container.style.top = "56px";
+		container.style.left = "12px";
+		container.style.zIndex = "1000";
+		container.classList.add(FIXED_CLASS);
+		const retryTimer = window.setInterval(() => {
+			if (tryAttach()) window.clearInterval(retryTimer);
+		}, 500);
+		const timeout = window.setTimeout(() => window.clearInterval(retryTimer), 1e4);
+		disposers.push(() => {
+			window.clearInterval(retryTimer);
+			window.clearTimeout(timeout);
+		});
+	}
+	const reposition = () => {
+		if (!tryAttach()) {
+			document.body.appendChild(container);
+			container.style.position = "fixed";
+			container.style.top = "56px";
+			container.style.left = "12px";
+			container.style.zIndex = "1000";
+			container.classList.add(FIXED_CLASS);
+		}
+	};
+	window.addEventListener("scroll", reposition, true);
+	window.addEventListener("resize", reposition);
+	disposers.push(() => {
+		window.removeEventListener("scroll", reposition, true);
+		window.removeEventListener("resize", reposition);
+	});
+	const keepAlive = window.setInterval(() => {
+		if (!container.isConnected) {
+			if (!tryAttach()) {
+				document.body.appendChild(container);
+				container.style.position = "fixed";
+				container.style.top = "56px";
+				container.style.left = "12px";
+				container.style.zIndex = "1000";
+				container.classList.add(FIXED_CLASS);
+			}
+		}
+	}, 2e3);
+	disposers.push(() => window.clearInterval(keepAlive));
+	update();
+	return () => {
+		for (const dispose of disposers.splice(0)) dispose();
+		container.remove();
+	};
+}
+//#endregion
 //#region src/client/GlassPanel.tsx
 /** The "UI Design" settings section: tune the glass look in real time. */
 const BG_TYPES = [
@@ -4038,7 +4319,10 @@ function mediaName(url) {
 	return name.length > 36 ? `${name.slice(0, 33)}…` : name;
 }
 function GlassPanel({ t, engine }) {
-	const [config, setConfig] = (0, react.useState)({ ...DEFAULT_CONFIG });
+	const [config, setConfig] = (0, react.useState)({
+		...DEFAULT_CONFIG,
+		mediaDisplay: getMediaDisplayEnabled()
+	});
 	const [saveState, setSaveState] = (0, react.useState)("idle");
 	const [uploading, setUploading] = (0, react.useState)(null);
 	const [toast, setToast] = (0, react.useState)(null);
@@ -4056,10 +4340,12 @@ function GlassPanel({ t, engine }) {
 			if (cancelled) return;
 			setConfig(cfg);
 			engine.apply(cfg);
+			setMediaDisplayEnabled(cfg.mediaDisplay);
 		}).catch(() => {
 			if (cancelled) return;
 			engine.apply({ ...DEFAULT_CONFIG });
 		});
+		setMediaDisplayEnabled(true);
 		return () => {
 			cancelled = true;
 			window.clearTimeout(saveTimer.current);
@@ -4069,6 +4355,7 @@ function GlassPanel({ t, engine }) {
 	function update(next) {
 		setConfig(next);
 		engine.apply(next);
+		setMediaDisplayEnabled(next.mediaDisplay);
 		setSaveState("saving");
 		window.clearTimeout(saveTimer.current);
 		const seq = ++saveSeq.current;
@@ -4170,11 +4457,32 @@ function GlassPanel({ t, engine }) {
 		saveConfig(next).then(() => {
 			setConfig(next);
 			engine.apply(next);
+			setMediaDisplayEnabled(next.mediaDisplay);
 			setSaveState("saved");
 			setToast(t("resetDone"));
 		}).catch((err) => {
 			setToast(t("saveFail", { error: err instanceof Error ? err.message : String(err) }));
 		});
+	}
+	async function clearData() {
+		if (!window.confirm(t("clearDataConfirm"))) return;
+		window.clearTimeout(saveTimer.current);
+		setSaveState("saving");
+		try {
+			await clearPersonalData();
+			playback.stop();
+			const next = { ...DEFAULT_CONFIG };
+			setLyricPos(next.lyricPos);
+			setConfig(next);
+			engine.apply(next);
+			setMediaDisplayEnabled(next.mediaDisplay);
+			setSaveState("saved");
+			setToast(t("clearDataDone"));
+			window.setTimeout(() => window.location.reload(), 800);
+		} catch (err) {
+			setSaveState("fail");
+			setToast(t("clearDataFail", { error: err instanceof Error ? err.message : String(err) }));
+		}
 	}
 	function exportConfig() {
 		const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
@@ -4192,6 +4500,7 @@ function GlassPanel({ t, engine }) {
 			await saveConfig(next);
 			setConfig(next);
 			engine.apply(next);
+			setMediaDisplayEnabled(next.mediaDisplay);
 			setSaveState("saved");
 			setToast(t("importDone"));
 		} catch (err) {
@@ -4525,6 +4834,11 @@ function GlassPanel({ t, engine }) {
 						lyricPos: pos
 					});
 				},
+				mediaDisplay: config.mediaDisplay,
+				onMediaDisplay: (show) => update({
+					...config,
+					mediaDisplay: show
+				}),
 				neteaseProxy: config.neteaseProxy,
 				onNeteaseProxy: (proxy) => update({
 					...config,
@@ -4583,6 +4897,11 @@ function GlassPanel({ t, engine }) {
 								variant: "outline",
 								onClick: () => void reset(),
 								children: t("resetButton")
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+								variant: "outline",
+								onClick: () => void clearData(),
+								children: t("clearDataButton")
 							}),
 							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
 								className: GlassPanel_module_default.saveState,
@@ -4661,221 +4980,6 @@ function LyricsLine({ t }) {
 			})
 		]
 	});
-}
-//#endregion
-//#region src/client/musicControls.ts
-/**
-* Lightweight DOM music controls that sit below the session-log button.
-*
-* We intentionally keep this outside React: the DSH slot API does not expose a
-* dedicated slot for this position in every version, so this mounts a small
-* player card near the session-log trigger (or as a fixed bottom-left fallback
-* while the trigger is still mounting).
-*/
-const CONTAINER_CLASS = "dsh-glass-music-controls";
-const FIXED_CLASS = "dsh-glass-music-controls--fixed";
-function findSessionLogButton() {
-	for (const selector of [
-		"button[aria-label=\"Session log\"]",
-		"button[aria-label=\"Session Log\"]",
-		"button[aria-label=\"session log\"]",
-		"button[aria-label*=\"session log\"]",
-		"button[aria-label*=\"Session Log\"]",
-		"button[aria-label=\"会话日志\"]",
-		"button[aria-label*=\"会话日志\"]",
-		"button[title=\"Session log\"]",
-		"button[title=\"Session Log\"]",
-		"button[title*=\"session log\"]",
-		"button[title*=\"Session Log\"]",
-		"button[title=\"会话日志\"]",
-		"button[title*=\"会话日志\"]",
-		"[data-testid=\"session-log\"]",
-		"[data-testid=\"session_log\"]",
-		".session-log"
-	]) {
-		const el = document.querySelector(selector);
-		if (el !== null) return el;
-	}
-	return Array.from(document.querySelectorAll("button, [role=\"button\"]")).find((el) => {
-		const text = (el.textContent ?? "").toLowerCase();
-		return text.includes("session log") || text.includes("会话日志") || text.includes("会话记录");
-	}) ?? null;
-}
-function createButton(label, title) {
-	const button = document.createElement("button");
-	button.type = "button";
-	button.textContent = label;
-	button.title = title;
-	button.setAttribute("aria-label", title);
-	return button;
-}
-function formatTime(seconds) {
-	if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-	const s = Math.floor(seconds);
-	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-/**
-* Mount the player card below the session-log button and return a disposer.
-* The card is visible whenever a song is loaded (playing or paused).
-*/
-function mountMusicControls(t) {
-	const container = document.createElement("div");
-	container.className = CONTAINER_CLASS;
-	container.style.display = "none";
-	const coverWrap = document.createElement("div");
-	coverWrap.className = "dsh-glass-music-cover";
-	const coverPlaceholder = document.createElement("span");
-	coverPlaceholder.className = "dsh-glass-music-cover-placeholder";
-	coverPlaceholder.textContent = "♪";
-	const coverImg = document.createElement("img");
-	coverImg.alt = "";
-	coverImg.addEventListener("error", () => {
-		coverImg.style.display = "none";
-		coverPlaceholder.style.display = "flex";
-	});
-	coverWrap.append(coverImg, coverPlaceholder);
-	const progressWrap = document.createElement("div");
-	progressWrap.className = "dsh-glass-music-progress";
-	const progressInput = document.createElement("input");
-	progressInput.type = "range";
-	progressInput.min = "0";
-	progressInput.max = "1000";
-	progressInput.step = "1";
-	progressInput.value = "0";
-	progressInput.setAttribute("aria-label", "Progress");
-	const timeWrap = document.createElement("div");
-	timeWrap.className = "dsh-glass-music-times";
-	const currentTime = document.createElement("span");
-	currentTime.className = "dsh-glass-music-time-current";
-	currentTime.textContent = "0:00";
-	const totalTime = document.createElement("span");
-	totalTime.className = "dsh-glass-music-time-total";
-	totalTime.textContent = "0:00";
-	timeWrap.append(currentTime, totalTime);
-	progressWrap.append(progressInput, timeWrap);
-	const controls = document.createElement("div");
-	controls.className = "dsh-glass-music-buttons";
-	const prevButton = createButton("⏮", t("prevTrack"));
-	const toggleButton = createButton("⏸", t("lyricPause"));
-	const nextButton = createButton("⏭", t("nextTrack"));
-	const volumeWrap = document.createElement("label");
-	volumeWrap.className = "dsh-glass-volume";
-	volumeWrap.title = t("volumeLabel");
-	const volumeIcon = document.createElement("span");
-	volumeIcon.textContent = "🔊";
-	const volumeInput = document.createElement("input");
-	volumeInput.type = "range";
-	volumeInput.min = "0";
-	volumeInput.max = "1";
-	volumeInput.step = "0.05";
-	volumeInput.value = String(playback.getSnapshot().volume);
-	volumeInput.setAttribute("aria-label", t("volumeLabel"));
-	volumeWrap.append(volumeIcon, volumeInput);
-	controls.append(prevButton, toggleButton, nextButton, volumeWrap);
-	container.append(coverWrap, progressWrap, controls);
-	const disposers = [];
-	const update = () => {
-		const snap = playback.getSnapshot();
-		const visible = snap.song !== null;
-		container.style.display = visible ? "flex" : "none";
-		const cover = snap.song?.cover ?? "";
-		if (cover !== "") {
-			coverImg.src = cover;
-			coverImg.style.display = "block";
-			coverPlaceholder.style.display = "none";
-		} else {
-			coverImg.removeAttribute("src");
-			coverImg.style.display = "none";
-			coverPlaceholder.style.display = "flex";
-		}
-		const duration = Number.isFinite(snap.duration) ? snap.duration : 0;
-		const progress = duration > 0 ? Math.min(1e3, Math.max(0, snap.time / duration * 1e3)) : 0;
-		if (document.activeElement !== progressInput) progressInput.value = String(Math.round(progress));
-		currentTime.textContent = formatTime(snap.time);
-		totalTime.textContent = formatTime(duration);
-		progressInput.disabled = duration <= 0;
-		toggleButton.textContent = snap.playing ? "⏸" : "▶";
-		toggleButton.title = snap.playing ? t("lyricPause") : t("lyricPlay");
-		toggleButton.setAttribute("aria-label", toggleButton.title);
-		prevButton.disabled = !visible || snap.queueIndex <= 0;
-		nextButton.disabled = !visible || snap.queueIndex < 0 || snap.queueIndex >= snap.queue.length - 1;
-		if (document.activeElement !== volumeInput) volumeInput.value = String(snap.volume);
-	};
-	const unsub = playback.subscribe(update);
-	disposers.push(unsub);
-	prevButton.addEventListener("click", () => playback.previous());
-	nextButton.addEventListener("click", () => playback.next());
-	toggleButton.addEventListener("click", () => playback.toggle());
-	volumeInput.addEventListener("input", () => playback.setVolume(Number(volumeInput.value)));
-	progressInput.addEventListener("input", () => {
-		const snap = playback.getSnapshot();
-		const duration = Number.isFinite(snap.duration) ? snap.duration : 0;
-		if (duration > 0) playback.seek(Number(progressInput.value) / 1e3 * duration);
-	});
-	const tryAttach = () => {
-		const sessionLog = findSessionLogButton();
-		if (sessionLog === null) return false;
-		const rect = sessionLog.getBoundingClientRect();
-		container.style.position = "fixed";
-		container.style.top = `${rect.bottom + 30}px`;
-		const cardWidth = container.offsetWidth || 180;
-		const maxLeft = window.innerWidth - cardWidth - 8;
-		container.style.left = `${Math.max(8, Math.min(rect.left, maxLeft))}px`;
-		container.style.zIndex = "1000";
-		if (container.parentElement !== document.body) document.body.appendChild(container);
-		container.classList.add(FIXED_CLASS);
-		return true;
-	};
-	if (!tryAttach()) {
-		document.body.appendChild(container);
-		container.style.position = "fixed";
-		container.style.top = "56px";
-		container.style.left = "12px";
-		container.style.zIndex = "1000";
-		container.classList.add(FIXED_CLASS);
-		const retryTimer = window.setInterval(() => {
-			if (tryAttach()) window.clearInterval(retryTimer);
-		}, 500);
-		const timeout = window.setTimeout(() => window.clearInterval(retryTimer), 1e4);
-		disposers.push(() => {
-			window.clearInterval(retryTimer);
-			window.clearTimeout(timeout);
-		});
-	}
-	const reposition = () => {
-		if (!tryAttach()) {
-			document.body.appendChild(container);
-			container.style.position = "fixed";
-			container.style.top = "56px";
-			container.style.left = "12px";
-			container.style.zIndex = "1000";
-			container.classList.add(FIXED_CLASS);
-		}
-	};
-	window.addEventListener("scroll", reposition, true);
-	window.addEventListener("resize", reposition);
-	disposers.push(() => {
-		window.removeEventListener("scroll", reposition, true);
-		window.removeEventListener("resize", reposition);
-	});
-	const keepAlive = window.setInterval(() => {
-		if (!container.isConnected) {
-			if (!tryAttach()) {
-				document.body.appendChild(container);
-				container.style.position = "fixed";
-				container.style.top = "56px";
-				container.style.left = "12px";
-				container.style.zIndex = "1000";
-				container.classList.add(FIXED_CLASS);
-			}
-		}
-	}, 2e3);
-	disposers.push(() => window.clearInterval(keepAlive));
-	update();
-	return () => {
-		for (const dispose of disposers.splice(0)) dispose();
-		container.remove();
-	};
 }
 //#endregion
 //#region src/client/index.ts
@@ -4958,9 +5062,11 @@ function apply(ctx) {
 		loadConfig().then((config) => {
 			if (disposed) return;
 			initLyricPos(config.lyricPos);
+			setMediaDisplayEnabled(config.mediaDisplay);
 			engine.apply(config);
 		}).catch(() => {
 			if (!disposed) engine.apply({ ...DEFAULT_CONFIG });
+			if (!disposed) setMediaDisplayEnabled(true);
 		});
 		return () => {
 			disposed = true;

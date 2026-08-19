@@ -12,6 +12,26 @@ import type { Translate } from './locales.ts'
 const CONTAINER_CLASS = 'dsh-glass-music-controls'
 const FIXED_CLASS = 'dsh-glass-music-controls--fixed'
 
+// Simple store so the NetEase settings panel can toggle the floating media card.
+let mediaDisplayEnabled = true
+const mediaDisplayListeners = new Set<() => void>()
+
+export function setMediaDisplayEnabled(enabled: boolean): void {
+  if (mediaDisplayEnabled === enabled) return
+  mediaDisplayEnabled = enabled
+  for (const listener of mediaDisplayListeners) listener()
+}
+
+export function getMediaDisplayEnabled(): boolean {
+  return mediaDisplayEnabled
+}
+
+export function subscribeMediaDisplay(listener: () => void): () => void {
+  mediaDisplayListeners.add(listener)
+  return () => mediaDisplayListeners.delete(listener)
+}
+
+
 function findSessionLogButton(): HTMLElement | null {
   const selectors = [
     'button[aria-label="Session log"]',
@@ -127,11 +147,12 @@ export function mountMusicControls(t: Translate): () => void {
   container.append(coverWrap, progressWrap, controls)
 
   const disposers: Array<() => void> = []
+  let mediaEnabled = getMediaDisplayEnabled()
 
   const update = (): void => {
     const snap: PlaybackState = playback.getSnapshot()
     const visible = snap.song !== null
-    container.style.display = visible ? 'flex' : 'none'
+    container.style.display = visible && mediaEnabled ? 'flex' : 'none'
 
     const cover = snap.song?.cover ?? ''
     if (cover !== '') {
@@ -165,6 +186,11 @@ export function mountMusicControls(t: Translate): () => void {
 
   const unsub = playback.subscribe(update)
   disposers.push(unsub)
+  const unsubMedia = subscribeMediaDisplay(() => {
+    mediaEnabled = getMediaDisplayEnabled()
+    update()
+  })
+  disposers.push(unsubMedia)
 
   prevButton.addEventListener('click', () => playback.previous())
   nextButton.addEventListener('click', () => playback.next())

@@ -18,7 +18,7 @@ import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSyn
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { registerNeteaseRoutes } from './netease.js'
+import { clearCookie, registerNeteaseRoutes } from './netease.js'
 
 // ---------------------------------------------------------------------------
 // shared shape (kept structural so the host half has no monorepo type deps)
@@ -74,6 +74,8 @@ export interface GlassConfig {
   customCss: string
   /** Lyric line position in the composer dock. */
   lyricPos: 'inline' | 'end' | 'hidden'
+    /** Whether to show the compact media player card in the web UI. */
+    mediaDisplay: boolean
   /** HTTP proxy for NetEase requests (e.g. http://127.0.0.1:7890). */
   neteaseProxy: string
   /** Remote NeteaseCloudMusicApi server base URL (public/self-hosted instance). */
@@ -97,6 +99,7 @@ export const DEFAULT_CONFIG: GlassConfig = Object.freeze({
   customCss: '',
   lyricPos: 'inline',
   neteaseProxy: '',
+    mediaDisplay: true,
   neteaseApiBase: '',
 })
 
@@ -340,6 +343,7 @@ export function apply(ctx: HostContext): void {
             merged.animLevel = ['none', 'soft', 'strong'].includes(merged.animLevel) ? merged.animLevel : 'soft'
             merged.customCss = String(merged.customCss ?? '').slice(0, 64 * 1024)
             merged.lyricPos = ['inline', 'end', 'hidden'].includes(merged.lyricPos) ? merged.lyricPos : 'inline'
+              merged.mediaDisplay = merged.mediaDisplay === true
             merged.neteaseProxy = String(merged.neteaseProxy ?? '').trim().slice(0, 300)
             merged.neteaseApiBase = String(merged.neteaseApiBase ?? '').trim().slice(0, 300)
             const normalized = normalizeHostConfig(merged)
@@ -459,6 +463,27 @@ export function apply(ctx: HostContext): void {
         }
       },
     }), 'dsh-glass-ui: media static route')
+
+      // clear personal data: NetEase login, uploaded media, and saved config
+      host.effect(() => host.webServer.register({
+        kind: 'exact',
+        path: '/glass-ui/clear-data',
+        handler: async (_req, res) => {
+          try {
+            clearCookie()
+            const dir = mediaDir()
+            if (existsSync(dir)) {
+              for (const name of readdirSync(dir)) {
+                rmSync(join(dir, name), { force: true })
+              }
+            }
+            writeConfig({ ...DEFAULT_CONFIG } as GlassConfig)
+            sendJson(res, 200, { ok: true })
+          } catch (err) {
+            sendText(res, 500, err instanceof Error ? err.message : 'clear data failed')
+          }
+        },
+      }), 'dsh-glass-ui: clear data route')
 
     // first-paint bootstrap: inject the saved glass variables before React
     // mounts so a refresh does not flash the stock theme
