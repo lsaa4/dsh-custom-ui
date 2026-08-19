@@ -22,7 +22,7 @@
 ### 从 GitHub 安装（无需发布 npm）
 
 ```sh
-dsh plugin --profile web add github:<你的用户名>/<仓库名>
+dsh plugin --profile web add github:lsaa4/dsh-custom-ui
 ```
 
 > 本仓库已提交构建产物（`lib/` + `client/`），安装无需构建脚本、无交互。若从源码安装（未提交产物），pnpm ≥10 会拦截构建脚本，需在 profile 的 `pnpm-workspace.yaml` 中 `allowBuilds` 后重跑。
