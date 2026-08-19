@@ -1,7 +1,7 @@
 window.__ModuleLoader__.load({ id: "dsh-glass-ui", factory: (require) => {
 var module = { exports: {} };
 var exports = module.exports;
-(()=>{const s=document.createElement('style');s.setAttribute('data-plugin',"dsh-glass-ui");s.textContent=":root {\n  --glass-opacity: .72;\n  --glass-blur: 18px;\n  --glass-font: \"\";\n  --glass-font-url: \"\";\n  --glass-bg-type: none;\n  --glass-bg-image: none;\n  --glass-bg-video: none;\n  --glass-bg-mask: 0;\n  --glass-bg-fit: cover;\n  --glass-anim-level: soft;\n  --glass-surface-light: #ffffffb8;\n  --glass-surface-dark: #101018b8;\n}\n\nbody.dsh-glass-on, body.dsh-glass-on button, body.dsh-glass-on input, body.dsh-glass-on select, body.dsh-glass-on textarea {\n  font-family: var(--glass-font);\n}\n\n#dsh-glass-bg {\n  z-index: -1;\n  pointer-events: none;\n  opacity: 0;\n  background: radial-gradient(1200px 800px at 82% -10%, #638cff38, #0000 60%), radial-gradient(1000px 700px at 8% 112%, #00d2b429, #0000 55%), linear-gradient(165deg, #4176e614, #0000 45%);\n  transition: opacity .7s, transform .7s, filter .7s;\n  position: fixed;\n  inset: 0;\n  overflow: hidden;\n}\n\nbody.dsh-glass-ready #dsh-glass-bg {\n  opacity: 1;\n}\n\n#dsh-glass-bg img, #dsh-glass-bg video {\n  object-fit: var(--glass-bg-fit, cover);\n  width: 100%;\n  height: 100%;\n  filter: blur(calc(var(--glass-blur) * .55)) saturate(1.12);\n  transition: filter .7s, opacity .7s;\n  position: absolute;\n  inset: 0;\n  transform: scale(1.06);\n}\n\nbody[data-glass-fit=\"contain\"] #dsh-glass-bg img, body[data-glass-fit=\"contain\"] #dsh-glass-bg video {\n  object-fit: contain;\n}\n\nbody[data-glass-fit=\"original\"] #dsh-glass-bg img, body[data-glass-fit=\"original\"] #dsh-glass-bg video {\n  object-fit: none;\n  width: auto;\n  max-width: none;\n  height: auto;\n  max-height: none;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%) scale(1.06);\n}\n\n#dsh-glass-bg:after {\n  content: \"\";\n  background: rgba(255, 255, 255, var(--glass-bg-mask));\n  transition: opacity .7s;\n  position: absolute;\n  inset: 0;\n}\n\nbody[data-ds-dark-theme] #dsh-glass-bg:after {\n  background: rgba(0, 0, 0, var(--glass-bg-mask));\n}\n\nbody.dsh-glass-on {\n  --dsh-scrollbar-thumb: #7f7f7f61;\n  --dsh-scrollbar-thumb-hover: #7f7f7f8c;\n}\n\n@keyframes dsh-glass-fade {\n  from {\n    opacity: 0;\n    transform: translateY(6px);\n  }\n\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n  animation: .45s cubic-bezier(.2, .6, .3, 1) both dsh-glass-fade;\n}\n\nbody.dsh-glass-anim-soft button, body.dsh-glass-anim-soft [role=\"button\"], body.dsh-glass-anim-strong button, body.dsh-glass-anim-strong [role=\"button\"] {\n  transition: transform .18s, background-color .18s, opacity .18s, border-color .18s, box-shadow .18s;\n}\n\nbody.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: .9s;\n}\n\n@keyframes dsh-glass-pop {\n  0% {\n    opacity: .6;\n    transform: translateY(2px) scale(.985);\n  }\n\n  100% {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-strong #root > * {\n  animation: .5s cubic-bezier(.2, .6, .3, 1) both dsh-glass-pop;\n}\n\nbody.dsh-glass-anim-strong button:hover, body.dsh-glass-anim-strong [role=\"button\"]:hover {\n  transform: translateY(-1px) scale(1.02);\n  box-shadow: 0 4px 18px #638cff38;\n}\n\nbody.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: 1.4s;\n}\n\nbody.dsh-glass-anim-none #root > * {\n  animation: none !important;\n}\n\nbody.dsh-glass-anim-none #dsh-glass-bg, body.dsh-glass-anim-none #dsh-glass-bg img, body.dsh-glass-anim-none #dsh-glass-bg video {\n  transition: none !important;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  body.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n    animation: none;\n  }\n\n  body.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n    transition: none;\n  }\n}\n.d09JSa_panel {\n  flex-direction: column;\n  gap: 16px;\n  max-width: 640px;\n  padding: 4px 0 16px;\n  display: flex;\n}\n\n.d09JSa_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.d09JSa_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.d09JSa_field {\n  flex-direction: column;\n  gap: 4px;\n  display: flex;\n}\n\n.d09JSa_fieldHead {\n  justify-content: space-between;\n  align-items: center;\n  font-size: 13px;\n  display: flex;\n}\n\n.d09JSa_value {\n  font-variant-numeric: tabular-nums;\n  opacity: .75;\n}\n\n.d09JSa_range {\n  width: 100%;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.d09JSa_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.d09JSa_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.d09JSa_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.d09JSa_grow {\n  flex: 220px;\n}\n\n.d09JSa_fileName {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.d09JSa_toggleRow {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  font-size: 13px;\n  display: flex;\n}\n\n.d09JSa_toggleRow input {\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.d09JSa_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.d09JSa_interval {\n  width: 90px;\n}\n\n.d09JSa_imageList {\n  flex-direction: column;\n  gap: 6px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.d09JSa_imageRow {\n  justify-content: space-between;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.d09JSa_imageName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  background: none;\n  border: 1px solid #0000;\n  border-radius: 6px;\n  flex: auto;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 12px;\n  display: inline-flex;\n  overflow: hidden;\n}\n\n.d09JSa_imageName em {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  background: #4176e62e;\n  border-radius: 8px;\n  padding: 1px 6px;\n  font-size: 10px;\n  font-style: normal;\n}\n\n.d09JSa_imageName[data-active] {\n  border-color: #4176e666;\n}\n\n.d09JSa_cssArea {\n  width: 100%;\n  min-height: 110px;\n  color: inherit;\n  resize: vertical;\n  box-sizing: border-box;\n  background: #0000000a;\n  border: 1px solid #7f7f7f40;\n  border-radius: 8px;\n  padding: 8px 10px;\n  font-family: SF Mono, JetBrains Mono, Consolas, monospace;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.d09JSa_saveState {\n  opacity: .7;\n  font-size: 12px;\n}\n.-pu28G_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.-pu28G_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.-pu28G_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_field {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.-pu28G_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.-pu28G_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.-pu28G_loginBox {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_qrBox {\n  flex-direction: column;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.-pu28G_qrBox canvas {\n  border: 1px solid #7f7f7f33;\n  border-radius: 8px;\n}\n\n.-pu28G_qrState {\n  opacity: .75;\n  margin: 0;\n  font-size: 12px;\n}\n\n.-pu28G_account {\n  font-size: 13px;\n  font-weight: 500;\n}\n\n.-pu28G_select {\n  color: inherit;\n  background: #7f7f7f0f;\n  border: 1px solid #7f7f7f4d;\n  border-radius: 8px;\n  max-width: 320px;\n  padding: 5px 10px;\n  font-size: 13px;\n}\n\n.-pu28G_songList {\n  flex-direction: column;\n  gap: 2px;\n  max-height: 260px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n  overflow-y: auto;\n}\n\n.-pu28G_songRow {\n  align-items: center;\n  display: flex;\n}\n\n.-pu28G_songName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 6px;\n  flex-direction: column;\n  flex: auto;\n  gap: 1px;\n  padding: 5px 8px;\n  display: flex;\n}\n\n.-pu28G_songName:hover {\n  background: #4176e61a;\n}\n\n.-pu28G_songActive, .-pu28G_songActive:hover {\n  background: #4176e62e;\n}\n\n.-pu28G_songTitle {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  overflow: hidden;\n}\n\n.-pu28G_songMeta {\n  opacity: .6;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 11px;\n  overflow: hidden;\n}\n\n.-pu28G_nowPlaying {\n  opacity: .75;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  font-size: 12px;\n  overflow: hidden;\n}\n.kclPIa_root {\n  min-width: 0;\n  max-width: 46vw;\n  color: var(--dsw-alias-label-tertiary, #7f7f7fd9);\n  white-space: nowrap;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  line-height: 20px;\n  display: inline-flex;\n}\n\n.kclPIa_root[data-pos=\"end\"] {\n  margin-left: auto;\n}\n\n.kclPIa_icon {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  flex: none;\n}\n\n.kclPIa_title {\n  text-overflow: ellipsis;\n  flex: none;\n  max-width: 30vw;\n  font-weight: 500;\n  overflow: hidden;\n}\n\n.kclPIa_sep {\n  opacity: .6;\n  flex: none;\n}\n\n.kclPIa_line {\n  text-overflow: ellipsis;\n  flex: auto;\n  min-width: 0;\n  overflow: hidden;\n}\n";(document.head||document.documentElement).appendChild(s)})();Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+(()=>{const s=document.createElement('style');s.setAttribute('data-plugin',"dsh-glass-ui");s.textContent=":root {\n  --glass-opacity: .72;\n  --glass-blur: 18px;\n  --glass-font: \"\";\n  --glass-font-url: \"\";\n  --glass-bg-type: none;\n  --glass-bg-image: none;\n  --glass-bg-video: none;\n  --glass-bg-mask: 0;\n  --glass-bg-fit: cover;\n  --glass-anim-level: soft;\n  --glass-surface-light: #ffffffb8;\n  --glass-surface-dark: #101018b8;\n}\n\nbody.dsh-glass-on, body.dsh-glass-on button, body.dsh-glass-on input, body.dsh-glass-on select, body.dsh-glass-on textarea {\n  font-family: var(--glass-font);\n}\n\n#dsh-glass-bg {\n  z-index: -1;\n  pointer-events: none;\n  opacity: 0;\n  background: radial-gradient(1200px 800px at 82% -10%, #638cff38, #0000 60%), radial-gradient(1000px 700px at 8% 112%, #00d2b429, #0000 55%), linear-gradient(165deg, #4176e614, #0000 45%);\n  transition: opacity .7s, transform .7s, filter .7s;\n  position: fixed;\n  inset: 0;\n  overflow: hidden;\n}\n\nbody.dsh-glass-ready #dsh-glass-bg {\n  opacity: 1;\n}\n\n#dsh-glass-bg img, #dsh-glass-bg video {\n  object-fit: var(--glass-bg-fit, cover);\n  width: 100%;\n  height: 100%;\n  filter: blur(calc(var(--glass-blur) * .55)) saturate(1.12);\n  transition: filter .7s, opacity .7s;\n  position: absolute;\n  inset: 0;\n  transform: scale(1.06);\n}\n\nbody[data-glass-fit=\"contain\"] #dsh-glass-bg img, body[data-glass-fit=\"contain\"] #dsh-glass-bg video {\n  object-fit: contain;\n}\n\nbody[data-glass-fit=\"original\"] #dsh-glass-bg img, body[data-glass-fit=\"original\"] #dsh-glass-bg video {\n  object-fit: none;\n  width: auto;\n  max-width: none;\n  height: auto;\n  max-height: none;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%) scale(1.06);\n}\n\n#dsh-glass-bg:after {\n  content: \"\";\n  background: rgba(255, 255, 255, var(--glass-bg-mask));\n  transition: opacity .7s;\n  position: absolute;\n  inset: 0;\n}\n\nbody[data-ds-dark-theme] #dsh-glass-bg:after {\n  background: rgba(0, 0, 0, var(--glass-bg-mask));\n}\n\nbody.dsh-glass-on {\n  --dsh-scrollbar-thumb: #7f7f7f61;\n  --dsh-scrollbar-thumb-hover: #7f7f7f8c;\n}\n\n@keyframes dsh-glass-fade {\n  from {\n    opacity: 0;\n    transform: translateY(6px);\n  }\n\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n  animation: .45s cubic-bezier(.2, .6, .3, 1) both dsh-glass-fade;\n}\n\nbody.dsh-glass-anim-soft button, body.dsh-glass-anim-soft [role=\"button\"], body.dsh-glass-anim-strong button, body.dsh-glass-anim-strong [role=\"button\"] {\n  transition: transform .18s, background-color .18s, opacity .18s, border-color .18s, box-shadow .18s;\n}\n\nbody.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: .9s;\n}\n\n@keyframes dsh-glass-pop {\n  0% {\n    opacity: .6;\n    transform: translateY(2px) scale(.985);\n  }\n\n  100% {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-strong #root > * {\n  animation: .5s cubic-bezier(.2, .6, .3, 1) both dsh-glass-pop;\n}\n\nbody.dsh-glass-anim-strong button:hover, body.dsh-glass-anim-strong [role=\"button\"]:hover {\n  transform: translateY(-1px) scale(1.02);\n  box-shadow: 0 4px 18px #638cff38;\n}\n\nbody.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: 1.4s;\n}\n\nbody.dsh-glass-anim-none #root > * {\n  animation: none !important;\n}\n\nbody.dsh-glass-anim-none #dsh-glass-bg, body.dsh-glass-anim-none #dsh-glass-bg img, body.dsh-glass-anim-none #dsh-glass-bg video {\n  transition: none !important;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  body.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n    animation: none;\n  }\n\n  body.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n    transition: none;\n  }\n}\n\n.dsh-glass-music-controls {\n  background: #7f7f7f14;\n  border: 1px solid #7f7f7f33;\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 6px;\n  width: 180px;\n  margin: 0;\n  padding: 8px;\n  display: flex;\n  box-shadow: 0 4px 16px #00000014;\n}\n\n.dsh-glass-music-cover {\n  aspect-ratio: 1;\n  background: #7f7f7f1f;\n  border-radius: 8px;\n  width: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.dsh-glass-music-cover img {\n  object-fit: cover;\n  width: 100%;\n  height: 100%;\n  display: none;\n}\n\n.dsh-glass-music-cover-placeholder {\n  color: #7f7f7fb3;\n  justify-content: center;\n  align-items: center;\n  width: 100%;\n  height: 100%;\n  font-size: 32px;\n  display: flex;\n}\n\n.dsh-glass-music-progress {\n  flex-direction: column;\n  gap: 2px;\n  display: flex;\n}\n\n.dsh-glass-music-progress input[type=\"range\"] {\n  width: 100%;\n  height: 4px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.dsh-glass-music-times {\n  opacity: .7;\n  justify-content: space-between;\n  font-size: 11px;\n  display: flex;\n}\n\n.dsh-glass-music-buttons {\n  flex-wrap: wrap;\n  justify-content: center;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.dsh-glass-music-controls button {\n  width: 24px;\n  height: 24px;\n  color: inherit;\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 6px;\n  justify-content: center;\n  align-items: center;\n  padding: 0;\n  font-size: 12px;\n  line-height: 1;\n  display: inline-flex;\n}\n\n.dsh-glass-music-controls button:hover:not(:disabled) {\n  background: #4176e61f;\n}\n\n.dsh-glass-music-controls button:disabled {\n  opacity: .35;\n  cursor: default;\n}\n\n.dsh-glass-volume {\n  align-items: center;\n  gap: 3px;\n  font-size: 11px;\n  display: inline-flex;\n}\n\n.dsh-glass-volume input[type=\"range\"] {\n  width: 48px;\n  height: 3px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.dsh-glass-music-controls--fixed {\n  z-index: 1000;\n  position: fixed;\n}\n.d09JSa_panel {\n  flex-direction: column;\n  gap: 16px;\n  max-width: 640px;\n  padding: 4px 0 16px;\n  display: flex;\n}\n\n.d09JSa_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.d09JSa_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.d09JSa_field {\n  flex-direction: column;\n  gap: 4px;\n  display: flex;\n}\n\n.d09JSa_fieldHead {\n  justify-content: space-between;\n  align-items: center;\n  font-size: 13px;\n  display: flex;\n}\n\n.d09JSa_value {\n  font-variant-numeric: tabular-nums;\n  opacity: .75;\n}\n\n.d09JSa_range {\n  width: 100%;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.d09JSa_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.d09JSa_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.d09JSa_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.d09JSa_grow {\n  flex: 220px;\n}\n\n.d09JSa_fileName {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.d09JSa_toggleRow {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  font-size: 13px;\n  display: flex;\n}\n\n.d09JSa_toggleRow input {\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.d09JSa_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.d09JSa_interval {\n  width: 90px;\n}\n\n.d09JSa_imageList {\n  flex-direction: column;\n  gap: 6px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.d09JSa_imageRow {\n  justify-content: space-between;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.d09JSa_imageName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  background: none;\n  border: 1px solid #0000;\n  border-radius: 6px;\n  flex: auto;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 12px;\n  display: inline-flex;\n  overflow: hidden;\n}\n\n.d09JSa_imageName em {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  background: #4176e62e;\n  border-radius: 8px;\n  padding: 1px 6px;\n  font-size: 10px;\n  font-style: normal;\n}\n\n.d09JSa_imageName[data-active] {\n  border-color: #4176e666;\n}\n\n.d09JSa_cssArea {\n  width: 100%;\n  min-height: 110px;\n  color: inherit;\n  resize: vertical;\n  box-sizing: border-box;\n  background: #0000000a;\n  border: 1px solid #7f7f7f40;\n  border-radius: 8px;\n  padding: 8px 10px;\n  font-family: SF Mono, JetBrains Mono, Consolas, monospace;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.d09JSa_saveState {\n  opacity: .7;\n  font-size: 12px;\n}\n.-pu28G_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.-pu28G_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.-pu28G_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_field {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.-pu28G_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.-pu28G_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.-pu28G_loginBox {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_qrBox {\n  flex-direction: column;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.-pu28G_qrBox canvas {\n  border: 1px solid #7f7f7f33;\n  border-radius: 8px;\n}\n\n.-pu28G_qrState {\n  opacity: .75;\n  margin: 0;\n  font-size: 12px;\n}\n\n.-pu28G_account {\n  font-size: 13px;\n  font-weight: 500;\n}\n\n.-pu28G_select {\n  color: inherit;\n  background: #7f7f7f0f;\n  border: 1px solid #7f7f7f4d;\n  border-radius: 8px;\n  max-width: 320px;\n  padding: 5px 10px;\n  font-size: 13px;\n}\n\n.-pu28G_songList {\n  flex-direction: column;\n  gap: 2px;\n  max-height: 260px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n  overflow-y: auto;\n}\n\n.-pu28G_songRow {\n  align-items: center;\n  display: flex;\n}\n\n.-pu28G_songName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 6px;\n  flex-direction: column;\n  flex: auto;\n  gap: 1px;\n  padding: 5px 8px;\n  display: flex;\n}\n\n.-pu28G_songName:hover {\n  background: #4176e61a;\n}\n\n.-pu28G_songActive, .-pu28G_songActive:hover {\n  background: #4176e62e;\n}\n\n.-pu28G_songTitle {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  overflow: hidden;\n}\n\n.-pu28G_songMeta {\n  opacity: .6;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 11px;\n  overflow: hidden;\n}\n\n.-pu28G_nowPlaying {\n  opacity: .75;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.-pu28G_volume {\n  opacity: .85;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  display: inline-flex;\n}\n\n.-pu28G_volume input[type=\"range\"] {\n  width: 80px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n.kclPIa_root {\n  min-width: 0;\n  max-width: 46vw;\n  color: var(--dsw-alias-label-tertiary, #7f7f7fd9);\n  white-space: nowrap;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  line-height: 20px;\n  display: inline-flex;\n}\n\n.kclPIa_root[data-pos=\"end\"] {\n  margin-left: auto;\n}\n\n.kclPIa_icon {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  flex: none;\n}\n\n.kclPIa_title {\n  text-overflow: ellipsis;\n  flex: none;\n  max-width: 30vw;\n  font-weight: 500;\n  overflow: hidden;\n}\n\n.kclPIa_sep {\n  opacity: .6;\n  flex: none;\n}\n\n.kclPIa_line {\n  text-overflow: ellipsis;\n  flex: auto;\n  min-width: 0;\n  overflow: hidden;\n}\n";(document.head||document.documentElement).appendChild(s)})();Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 //#region \0rolldown/runtime.js
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -94,10 +94,14 @@ var GlassEngine = class {
 			existing?.remove();
 			return;
 		}
-		if (existing !== null) return;
+		const css = `@font-face{font-family:${CUSTOM_FONT_FAMILY};src:url("${config.fontUrl}") format("woff2"),url("${config.fontUrl}") format("woff"),url("${config.fontUrl}") format("truetype");font-display:swap}`;
+		if (existing !== null) {
+			if (existing.textContent !== css) existing.textContent = css;
+			return;
+		}
 		const style = document.createElement("style");
 		style.id = FONT_FACE_ID;
-		style.textContent = `@font-face{font-family:${CUSTOM_FONT_FAMILY};src:url("${config.fontUrl}") format("woff2"),url("${config.fontUrl}") format("woff"),url("${config.fontUrl}") format("truetype");font-display:swap}`;
+		style.textContent = css;
 		document.head.appendChild(style);
 		this.disposers.push(() => style.remove());
 	}
@@ -141,10 +145,20 @@ var GlassEngine = class {
 		}
 		return el;
 	}
+	/**
+	* Canonical absolute form of a wallpaper URL. Element `.src` getters return
+	* absolute URLs while config values are relative (`/glass-ui/media/…`), so
+	* raw string comparison can never dedupe — every apply() would re-probe the
+	* wallpaper. Resolve both sides through here.
+	*/
+	absUrl(url) {
+		return new URL(url, window.location.href).href;
+	}
 	renderImage(url) {
 		const host = this.ensureBgHost();
+		const abs = this.absUrl(url);
 		const activeEl = this.imageEl(this.active);
-		if (activeEl.src === url) return;
+		if (activeEl.src === abs) return;
 		const seq = ++this.imageSeq;
 		const probe = new Image();
 		probe.onload = () => {
@@ -152,7 +166,7 @@ var GlassEngine = class {
 			if (!host.isConnected) return;
 			const nextKey = this.active === "A" ? "B" : "A";
 			const nextEl = this.imageEl(nextKey);
-			nextEl.src = url;
+			nextEl.src = abs;
 			nextEl.style.opacity = "0";
 			nextEl.offsetWidth;
 			nextEl.style.transition = "opacity 0.45s ease";
@@ -162,7 +176,7 @@ var GlassEngine = class {
 			this.active = nextKey;
 		};
 		probe.onerror = () => {};
-		probe.src = url;
+		probe.src = abs;
 	}
 	/**
 	* Video wallpaper with readiness gating: a bare <video> paints BLACK while
@@ -175,7 +189,8 @@ var GlassEngine = class {
 	*/
 	renderVideo(url) {
 		const host = this.ensureBgHost();
-		if (this.currentVideo !== null && this.currentVideo.src === url) return;
+		const abs = this.absUrl(url);
+		if (this.currentVideo !== null && this.currentVideo.src === abs) return;
 		const seq = ++this.videoSeq;
 		const probe = document.createElement("video");
 		probe.muted = true;
@@ -216,7 +231,7 @@ var GlassEngine = class {
 		};
 		probe.addEventListener("loadeddata", onReady);
 		probe.addEventListener("error", onError);
-		probe.src = url;
+		probe.src = abs;
 		probe.load();
 		host.appendChild(probe);
 	}
@@ -272,6 +287,21 @@ var GlassEngine = class {
 		document.getElementById(BG_ID)?.remove();
 		document.getElementById(FONT_FACE_ID)?.remove();
 		document.getElementById(CUSTOM_CSS_ID)?.remove();
+		const root = document.documentElement;
+		for (const name of [
+			"--glass-opacity",
+			"--glass-blur",
+			"--glass-font",
+			"--glass-font-url",
+			"--glass-bg-type",
+			"--glass-bg-image",
+			"--glass-bg-video",
+			"--glass-bg-mask",
+			"--glass-bg-fit",
+			"--glass-anim-level",
+			"--glass-surface-light",
+			"--glass-surface-dark"
+		]) root.style.removeProperty(name);
 		const body = document.body;
 		body.classList.remove("dsh-glass-on", "dsh-glass-anim-soft", "dsh-glass-anim-strong", "dsh-glass-anim-none", "dsh-glass-ready");
 		delete body.dataset.glassFit;
@@ -435,7 +465,13 @@ const zh = {
 	lyricNone: "未在播放",
 	lyricHot: "热门歌单…",
 	lyricSearch: "搜索",
-	lyricSearchPh: "搜索歌曲…"
+	lyricSearchPh: "搜索歌曲…",
+	lyricUnavailable: "该歌曲暂不可播放（版权/VIP 限制）",
+	lyricUnknownArtist: "未知歌手",
+	lyricPaused: "已暂停",
+	prevTrack: "上一首",
+	nextTrack: "下一首",
+	volumeLabel: "音量"
 };
 const en = {
 	nav: "UI Design",
@@ -527,7 +563,13 @@ const en = {
 	lyricNone: "Nothing playing",
 	lyricHot: "Hot playlists…",
 	lyricSearch: "Search",
-	lyricSearchPh: "Search songs…"
+	lyricSearchPh: "Search songs…",
+	lyricUnavailable: "This song is not playable (VIP/licensing restrictions)",
+	lyricUnknownArtist: "Unknown artist",
+	lyricPaused: "Paused",
+	prevTrack: "Previous",
+	nextTrack: "Next",
+	volumeLabel: "Volume"
 };
 const FONT_PRESETS = [
 	{
@@ -2993,9 +3035,13 @@ async function weapi(path, data = {}) {
 	return await res.json();
 }
 async function getAccount() {
-	const res = await fetch("/netease/account", { cache: "no-store" });
-	if (!res.ok) return { loggedIn: false };
-	return await res.json();
+	try {
+		const res = await fetch("/netease/account", { cache: "no-store" });
+		if (!res.ok) return { loggedIn: false };
+		return await res.json();
+	} catch {
+		return { loggedIn: false };
+	}
 }
 async function logout() {
 	await fetch("/netease/logout", { method: "POST" });
@@ -3111,6 +3157,7 @@ async function fetchPlaylistTracks(id) {
 		name: t.name,
 		artists: (t.ar ?? []).map((a) => a.name ?? "").filter((s) => s !== "").join(" / "),
 		album: t.al?.name,
+		cover: t.al?.picUrl,
 		durationMs: t.dt
 	}));
 }
@@ -3121,6 +3168,7 @@ async function fetchDailySongs() {
 		name: s.name,
 		artists: (s.ar ?? []).map((a) => a.name ?? "").filter((x) => x !== "").join(" / "),
 		album: s.al?.name,
+		cover: s.al?.picUrl,
 		durationMs: s.dt
 	}));
 }
@@ -3165,20 +3213,29 @@ async function fetchPublicSongUrl(id) {
 //#endregion
 //#region src/client/lyrics.ts
 /** Playback manager + LRC parser + lyric-position store. */
-const LRC_LINE = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]\s*(.*)/;
+const LRC_TAG = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]/g;
+/** One timestamp tag → seconds (e.g. `[1:02.5]` → 62.5). */
+function tagToSeconds(tag) {
+	const minutes = Number(tag[1] ?? 0);
+	const seconds = Number(tag[2] ?? 0);
+	const fracRaw = tag[3];
+	const frac = fracRaw === void 0 ? 0 : Number(fracRaw.padEnd(3, "0")) / 1e3;
+	return minutes * 60 + seconds + frac;
+}
+/**
+* Parse LRC into timed lines. Handles repeated timestamps on one line
+* (`[00:10][00:20]歌词` → two lines at 10s and 20s) and skips pure metadata
+* lines (no timestamp tags, e.g. `[ti:...]` / `[ar:...]`).
+*/
 function parseLrc(lrc) {
 	const lines = [];
 	for (const raw of lrc.split("\n")) {
-		const m = LRC_LINE.exec(raw.trim());
-		if (m === null) continue;
-		const minutes = Number(m[1] ?? 0);
-		const seconds = Number(m[2] ?? 0);
-		const fracRaw = m[3];
-		const frac = fracRaw === void 0 ? 0 : Number(fracRaw.padEnd(3, "0")) / 1e3;
-		const text = (m[4] ?? "").trim();
+		LRC_TAG.lastIndex = 0;
+		const text = raw.replace(LRC_TAG, "").trim();
 		if (text === "") continue;
-		lines.push({
-			time: minutes * 60 + seconds + frac,
+		let tag;
+		while ((tag = LRC_TAG.exec(raw)) !== null) lines.push({
+			time: tagToSeconds(tag),
 			text
 		});
 	}
@@ -3194,6 +3251,8 @@ function lineAtTime(lines, time) {
 	}
 	return current;
 }
+/** Locale key for "this song cannot be played (VIP/licensing)". */
+const PLAYBACK_ERROR_KEY = "lyricUnavailable";
 const EMPTY = {
 	song: null,
 	playing: false,
@@ -3202,7 +3261,10 @@ const EMPTY = {
 	currentLine: null,
 	lyrics: [],
 	error: null,
-	loading: false
+	loading: false,
+	volume: 1,
+	queue: [],
+	queueIndex: -1
 };
 var PlaybackManager = class {
 	audio = new Audio();
@@ -3212,8 +3274,12 @@ var PlaybackManager = class {
 	queueIndex = -1;
 	state = { ...EMPTY };
 	listeners = /* @__PURE__ */ new Set();
+	/** monotonically increasing play request id — stale async results are dropped */
+	playSeq = 0;
 	constructor() {
 		this.audio.preload = "auto";
+		this.audio.volume = 1;
+		this.audio.volume = 1;
 		this.audio.addEventListener("timeupdate", () => this.sync());
 		this.audio.addEventListener("loadedmetadata", () => this.sync());
 		this.audio.addEventListener("play", () => this.sync());
@@ -3226,7 +3292,7 @@ var PlaybackManager = class {
 			this.state = {
 				...this.state,
 				playing: false,
-				error: "该歌曲暂不可播放（版权/VIP 限制）"
+				error: PLAYBACK_ERROR_KEY
 			};
 			this.emit();
 		});
@@ -3251,6 +3317,7 @@ var PlaybackManager = class {
 	}
 	/** Load and play a song; fetch its stream URL and lyrics. */
 	async play(song, queue) {
+		const seq = ++this.playSeq;
 		if (queue !== void 0) {
 			this.queue = queue;
 			this.queueIndex = queue.findIndex((s) => s.id === song.id);
@@ -3258,16 +3325,24 @@ var PlaybackManager = class {
 		this.state = {
 			...EMPTY,
 			song,
-			loading: true
+			loading: true,
+			volume: this.audio.volume,
+			queue: this.queue,
+			queueIndex: this.queueIndex
 		};
 		this.emit();
 		const [weapiUrl, lrc] = await Promise.all([fetchSongUrl(song.id), fetchLyric(song.id).catch(() => "")]);
+		if (seq !== this.playSeq) return;
 		const url = weapiUrl ?? await fetchPublicSongUrl(song.id);
+		if (seq !== this.playSeq) return;
 		if (url === null) {
 			this.state = {
 				...EMPTY,
 				song,
-				error: "该歌曲暂不可播放（VIP/版权限制）"
+				error: PLAYBACK_ERROR_KEY,
+				volume: this.audio.volume,
+				queue: this.queue,
+				queueIndex: this.queueIndex
 			};
 			this.emit();
 			return;
@@ -3284,6 +3359,7 @@ var PlaybackManager = class {
 		try {
 			await this.audio.play();
 		} catch {
+			if (seq !== this.playSeq) return;
 			this.state = {
 				...this.state,
 				playing: false
@@ -3303,7 +3379,51 @@ var PlaybackManager = class {
 		if (this.audio.paused) this.audio.play().catch(() => void 0);
 		else this.audio.pause();
 	}
+	/** Set audio volume (0..1). */
+	setVolume(volume) {
+		const next = Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : this.audio.volume;
+		if (next === this.audio.volume) return;
+		this.audio.volume = next;
+		this.state = {
+			...this.state,
+			volume: next
+		};
+		this.emit();
+	}
+	/** Seek to a playback position in seconds. */
+	seek(time) {
+		if (!Number.isFinite(time)) return;
+		const max = Number.isFinite(this.audio.duration) ? this.audio.duration : time;
+		this.audio.currentTime = Math.min(Math.max(0, time), max);
+		this.sync();
+	}
+	/** Play the next track in the current queue, if any. */
+	next() {
+		if (this.queue.length === 0 || this.queueIndex < 0 || this.queueIndex >= this.queue.length - 1) return;
+		this.queueIndex += 1;
+		const next = this.queue[this.queueIndex];
+		if (next !== void 0) this.play(next);
+	}
+	/** Play the previous track, or restart the current one after 3s. */
+	previous() {
+		if (this.queue.length === 0 || this.queueIndex <= 0) {
+			if (this.audio.currentTime > 3) {
+				this.audio.currentTime = 0;
+				this.sync();
+			}
+			return;
+		}
+		if (this.audio.currentTime > 3) {
+			this.audio.currentTime = 0;
+			this.sync();
+			return;
+		}
+		this.queueIndex -= 1;
+		const prev = this.queue[this.queueIndex];
+		if (prev !== void 0) this.play(prev);
+	}
 	stop() {
+		this.playSeq += 1;
 		this.audio.pause();
 		this.audio.removeAttribute("src");
 		this.audio.load();
@@ -3311,7 +3431,10 @@ var PlaybackManager = class {
 		this.lyrics = [];
 		this.queue = [];
 		this.queueIndex = -1;
-		this.state = { ...EMPTY };
+		this.state = {
+			...EMPTY,
+			volume: this.audio.volume
+		};
 		this.emit();
 	}
 };
@@ -3320,6 +3443,11 @@ let lyricPos = "inline";
 const posListeners = /* @__PURE__ */ new Set();
 function getLyricPos() {
 	return lyricPos;
+}
+function setLyricPos(pos) {
+	if (pos === lyricPos) return;
+	lyricPos = pos;
+	for (const listener of posListeners) listener();
 }
 function subscribeLyricPos(listener) {
 	posListeners.add(listener);
@@ -3349,7 +3477,8 @@ var NeteasePanel_module_default = {
 	"songMeta": "-pu28G_songMeta",
 	"songName": "-pu28G_songName",
 	"songRow": "-pu28G_songRow",
-	"songTitle": "-pu28G_songTitle"
+	"songTitle": "-pu28G_songTitle",
+	"volume": "-pu28G_volume"
 };
 //#endregion
 //#region src/client/NeteasePanel.tsx
@@ -3391,17 +3520,21 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 	const [toast, setToast] = (0, react.useState)(null);
 	const canvasRef = (0, react.useRef)(null);
 	const pollTimer = (0, react.useRef)(void 0);
+	const mountedRef = (0, react.useRef)(true);
 	const [playing, setPlaying] = (0, react.useState)(false);
 	const [currentSongId, setCurrentSongId] = (0, react.useState)(null);
+	const [volume, setVolume] = (0, react.useState)(playback.getSnapshot().volume);
 	(0, react.useEffect)(() => {
 		return playback.subscribe(() => {
 			const snap = playback.getSnapshot();
 			setPlaying(snap.playing);
 			setCurrentSongId(snap.song?.id ?? null);
+			setVolume(snap.volume);
 		});
 	}, []);
 	(0, react.useEffect)(() => {
 		let cancelled = false;
+		mountedRef.current = true;
 		fetchHotPlaylists().then((list) => {
 			if (!cancelled) setHotPlaylists(list);
 		}).catch(() => void 0);
@@ -3413,15 +3546,66 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 			});
 		});
 		return () => {
+			mountedRef.current = false;
 			cancelled = true;
 			if (pollTimer.current !== void 0) window.clearInterval(pollTimer.current);
 		};
 	}, []);
+	function clearQrPoll() {
+		if (pollTimer.current !== void 0) {
+			window.clearTimeout(pollTimer.current);
+			pollTimer.current = void 0;
+		}
+		setPolling(false);
+	}
+	function scheduleQrPoll(key) {
+		if (!mountedRef.current) return;
+		if (pollTimer.current !== void 0) window.clearTimeout(pollTimer.current);
+		setPolling(true);
+		pollTimer.current = window.setTimeout(async () => {
+			pollTimer.current = void 0;
+			if (!mountedRef.current) return;
+			try {
+				const status = await pollQrLogin(key);
+				if (!mountedRef.current) return;
+				if (status.code === 803) {
+					clearQrPoll();
+					setQrKey(null);
+					const acc = {
+						loggedIn: true,
+						nickname: status.nickname
+					};
+					setAccount(acc);
+					setToast(t("lyricLoginOk", { name: status.nickname ?? "" }));
+					if (acc.uid === void 0) {
+						const fresh = await getAccount();
+						if (!mountedRef.current) return;
+						setAccount(fresh.loggedIn ? fresh : acc);
+						if (fresh.uid !== void 0) fetchPlaylists(fresh.uid).then((list) => {
+							if (mountedRef.current) setPlaylists(list);
+						});
+					}
+				} else if (status.code === 802) {
+					setQrState(t("lyricQrConfirm"));
+					scheduleQrPoll(key);
+				} else if (status.code === 800) {
+					clearQrPoll();
+					setQrState(t("lyricQrExpired"));
+				} else scheduleQrPoll(key);
+			} catch {
+				if (mountedRef.current) scheduleQrPoll(key);
+			}
+		}, 2e3);
+	}
 	async function startQrLogin() {
+		clearQrPoll();
+		setQrKey(null);
+		setQrImg(null);
+		setBusy(true);
+		setQrState(t("lyricQrLoading"));
 		try {
-			setBusy(true);
-			setQrState(t("lyricQrLoading"));
 			const { key, qrimg } = await requestQrKey();
+			if (!mountedRef.current) return;
 			setQrKey(key);
 			setQrImg(qrimg ?? null);
 			if (qrimg === void 0 || qrimg === "") {
@@ -3431,45 +3615,19 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 					margin: 1
 				});
 			}
+			if (!mountedRef.current) return;
 			setQrState(t("lyricQrScan"));
-			setPolling(true);
-			if (pollTimer.current !== void 0) window.clearInterval(pollTimer.current);
-			pollTimer.current = window.setInterval(async () => {
-				try {
-					const status = await pollQrLogin(key);
-					if (status.code === 803) {
-						if (pollTimer.current !== void 0) window.clearInterval(pollTimer.current);
-						setPolling(false);
-						setQrKey(null);
-						const acc = {
-							loggedIn: true,
-							nickname: status.nickname
-						};
-						setAccount(acc);
-						setToast(t("lyricLoginOk", { name: status.nickname ?? "" }));
-						if (acc.uid === void 0) {
-							const fresh = await getAccount();
-							setAccount(fresh);
-							if (fresh.uid !== void 0) fetchPlaylists(fresh.uid).then(setPlaylists);
-						}
-					} else if (status.code === 802) setQrState(t("lyricQrConfirm"));
-					else if (status.code === 800) {
-						setQrState(t("lyricQrExpired"));
-						setPolling(false);
-						if (pollTimer.current !== void 0) window.clearInterval(pollTimer.current);
-					}
-				} catch {}
-			}, 2e3);
+			scheduleQrPoll(key);
 		} catch (err) {
-			setToast(t("lyricQrFail", { error: err instanceof Error ? err.message : String(err) }));
+			if (mountedRef.current) setToast(t("lyricQrFail", { error: err instanceof Error ? err.message : String(err) }));
 		} finally {
-			setBusy(false);
+			if (mountedRef.current) setBusy(false);
 		}
 	}
 	function cancelQr() {
-		if (pollTimer.current !== void 0) window.clearInterval(pollTimer.current);
-		setPolling(false);
+		clearQrPoll();
 		setQrKey(null);
+		setQrImg(null);
 	}
 	async function doCookieLogin() {
 		const cookie = normalizeCookiePaste(cookieInput);
@@ -3575,7 +3733,6 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 					children: t("lyricProxyLabel")
 				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
 					className: NeteasePanel_module_default.grow,
-					placeholder: "http://127.0.0.1:7890 / socks5://127.0.0.1:10808",
 					value: neteaseProxy,
 					onChange: (e) => onNeteaseProxy(e.target.value.trim())
 				})]
@@ -3587,7 +3744,6 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 					children: t("lyricApiLabel")
 				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
 					className: NeteasePanel_module_default.grow,
-					placeholder: "https://music.mcseekeri.com",
 					value: neteaseApiBase,
 					onChange: (e) => onNeteaseApiBase(e.target.value.trim())
 				})]
@@ -3777,6 +3933,24 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 				children: [
 					/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
 						size: "sm",
+						variant: "ghost",
+						disabled: playback.getSnapshot().song === null || playback.getSnapshot().queueIndex <= 0,
+						onClick: () => playback.previous(),
+						title: t("prevTrack"),
+						"aria-label": t("prevTrack"),
+						children: "⏮"
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+						size: "sm",
+						variant: "ghost",
+						disabled: playback.getSnapshot().song === null || playback.getSnapshot().queueIndex < 0 || playback.getSnapshot().queueIndex >= playback.getSnapshot().queue.length - 1,
+						onClick: () => playback.next(),
+						title: t("nextTrack"),
+						"aria-label": t("nextTrack"),
+						children: "⏭"
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+						size: "sm",
 						variant: "outline",
 						disabled: !playing && playback.getSnapshot().song === null,
 						onClick: () => playback.toggle(),
@@ -3788,6 +3962,18 @@ function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseProxy, n
 						disabled: playback.getSnapshot().song === null,
 						onClick: () => playback.stop(),
 						children: t("lyricStop")
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("label", {
+						className: NeteasePanel_module_default.volume,
+						children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("volumeLabel") }), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+							type: "range",
+							min: 0,
+							max: 1,
+							step: .05,
+							value: volume,
+							onChange: (e) => playback.setVolume(Number(e.target.value)),
+							"aria-label": t("volumeLabel")
+						})]
 					}),
 					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
 						className: NeteasePanel_module_default.nowPlaying,
@@ -3857,6 +4043,9 @@ function GlassPanel({ t, engine }) {
 	const [uploading, setUploading] = (0, react.useState)(null);
 	const [toast, setToast] = (0, react.useState)(null);
 	const saveTimer = (0, react.useRef)(void 0);
+	/** monotonically increasing save id — a stale save response must not
+	*  overwrite newer local edits (the debounce only gates the request). */
+	const saveSeq = (0, react.useRef)(0);
 	const imageInput = (0, react.useRef)(null);
 	const videoInput = (0, react.useRef)(null);
 	const fontInput = (0, react.useRef)(null);
@@ -3882,8 +4071,16 @@ function GlassPanel({ t, engine }) {
 		engine.apply(next);
 		setSaveState("saving");
 		window.clearTimeout(saveTimer.current);
+		const seq = ++saveSeq.current;
 		saveTimer.current = window.setTimeout(() => {
-			saveConfig(next).then((saved) => setConfig(saved)).then(() => setSaveState("saved")).catch((err) => {
+			saveConfig(next).then((saved) => {
+				if (seq !== saveSeq.current) return;
+				setConfig(saved);
+			}).then(() => {
+				if (seq !== saveSeq.current) return;
+				setSaveState("saved");
+			}).catch((err) => {
+				if (seq !== saveSeq.current) return;
 				setSaveState("fail");
 				setToast(t("saveFail", { error: err instanceof Error ? err.message : String(err) }));
 			});
@@ -3910,9 +4107,7 @@ function GlassPanel({ t, engine }) {
 			} else update({
 				...config,
 				bgType: "video",
-				bgVideo: url,
-				bgImage: "",
-				bgImages: []
+				bgVideo: url
 			});
 		} catch (err) {
 			setToast(t("uploadFail", { error: err instanceof Error ? err.message : String(err) }));
@@ -3971,6 +4166,7 @@ function GlassPanel({ t, engine }) {
 	function reset() {
 		window.clearTimeout(saveTimer.current);
 		const next = { ...DEFAULT_CONFIG };
+		setLyricPos(next.lyricPos);
 		saveConfig(next).then(() => {
 			setConfig(next);
 			engine.apply(next);
@@ -3992,6 +4188,7 @@ function GlassPanel({ t, engine }) {
 	async function onImportFile(file) {
 		try {
 			const next = normalizeConfig(JSON.parse(await file.text()));
+			setLyricPos(next.lyricPos);
 			await saveConfig(next);
 			setConfig(next);
 			engine.apply(next);
@@ -4321,10 +4518,13 @@ function GlassPanel({ t, engine }) {
 			/* @__PURE__ */ (0, react_jsx_runtime.jsx)(NeteasePanel, {
 				t,
 				lyricPos: config.lyricPos,
-				onLyricPos: (pos) => update({
-					...config,
-					lyricPos: pos
-				}),
+				onLyricPos: (pos) => {
+					setLyricPos(pos);
+					update({
+						...config,
+						lyricPos: pos
+					});
+				},
 				neteaseProxy: config.neteaseProxy,
 				onNeteaseProxy: (proxy) => update({
 					...config,
@@ -4426,14 +4626,18 @@ var LyricsLine_module_default = {
 };
 //#endregion
 //#region src/client/LyricsLine.tsx
-/** The lyric line rendered in the composer dock, level with the stats row. */
-function LyricsLine() {
+/**
+* The lyric line rendered in the composer dock, level with the stats row.
+* The slot renderer injects a `t` bound to this entry's locale namespace
+* (registered via `locale: NS`); it is optional here only for type safety.
+*/
+function LyricsLine({ t }) {
 	const state = (0, react.useSyncExternalStore)(playback.subscribe, playback.getSnapshot);
 	const pos = (0, react.useSyncExternalStore)(subscribeLyricPos, getLyricPos);
 	if (pos === "hidden") return null;
 	if (state.song === null) return null;
-	const title = `${state.song.name} - ${state.song.artists || "未知歌手"}`;
-	const line = state.loading ? "加载中…" : state.error !== null ? state.error : state.currentLine !== null ? state.currentLine.text : state.playing ? "♪" : "已暂停";
+	const title = `${state.song.name} - ${state.song.artists || (t !== void 0 ? t("lyricUnknownArtist") : "未知歌手")}`;
+	const line = state.loading ? t !== void 0 ? t("lyricLoading") : "加载中…" : state.error !== null ? t !== void 0 ? t(state.error) : "该歌曲暂不可播放（版权/VIP 限制）" : state.currentLine !== null ? state.currentLine.text : state.playing ? "♪" : t !== void 0 ? t("lyricPaused") : "已暂停";
 	return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
 		className: LyricsLine_module_default.root,
 		"data-pos": pos,
@@ -4457,6 +4661,221 @@ function LyricsLine() {
 			})
 		]
 	});
+}
+//#endregion
+//#region src/client/musicControls.ts
+/**
+* Lightweight DOM music controls that sit below the session-log button.
+*
+* We intentionally keep this outside React: the DSH slot API does not expose a
+* dedicated slot for this position in every version, so this mounts a small
+* player card near the session-log trigger (or as a fixed bottom-left fallback
+* while the trigger is still mounting).
+*/
+const CONTAINER_CLASS = "dsh-glass-music-controls";
+const FIXED_CLASS = "dsh-glass-music-controls--fixed";
+function findSessionLogButton() {
+	for (const selector of [
+		"button[aria-label=\"Session log\"]",
+		"button[aria-label=\"Session Log\"]",
+		"button[aria-label=\"session log\"]",
+		"button[aria-label*=\"session log\"]",
+		"button[aria-label*=\"Session Log\"]",
+		"button[aria-label=\"会话日志\"]",
+		"button[aria-label*=\"会话日志\"]",
+		"button[title=\"Session log\"]",
+		"button[title=\"Session Log\"]",
+		"button[title*=\"session log\"]",
+		"button[title*=\"Session Log\"]",
+		"button[title=\"会话日志\"]",
+		"button[title*=\"会话日志\"]",
+		"[data-testid=\"session-log\"]",
+		"[data-testid=\"session_log\"]",
+		".session-log"
+	]) {
+		const el = document.querySelector(selector);
+		if (el !== null) return el;
+	}
+	return Array.from(document.querySelectorAll("button, [role=\"button\"]")).find((el) => {
+		const text = (el.textContent ?? "").toLowerCase();
+		return text.includes("session log") || text.includes("会话日志") || text.includes("会话记录");
+	}) ?? null;
+}
+function createButton(label, title) {
+	const button = document.createElement("button");
+	button.type = "button";
+	button.textContent = label;
+	button.title = title;
+	button.setAttribute("aria-label", title);
+	return button;
+}
+function formatTime(seconds) {
+	if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+	const s = Math.floor(seconds);
+	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+/**
+* Mount the player card below the session-log button and return a disposer.
+* The card is visible whenever a song is loaded (playing or paused).
+*/
+function mountMusicControls(t) {
+	const container = document.createElement("div");
+	container.className = CONTAINER_CLASS;
+	container.style.display = "none";
+	const coverWrap = document.createElement("div");
+	coverWrap.className = "dsh-glass-music-cover";
+	const coverPlaceholder = document.createElement("span");
+	coverPlaceholder.className = "dsh-glass-music-cover-placeholder";
+	coverPlaceholder.textContent = "♪";
+	const coverImg = document.createElement("img");
+	coverImg.alt = "";
+	coverImg.addEventListener("error", () => {
+		coverImg.style.display = "none";
+		coverPlaceholder.style.display = "flex";
+	});
+	coverWrap.append(coverImg, coverPlaceholder);
+	const progressWrap = document.createElement("div");
+	progressWrap.className = "dsh-glass-music-progress";
+	const progressInput = document.createElement("input");
+	progressInput.type = "range";
+	progressInput.min = "0";
+	progressInput.max = "1000";
+	progressInput.step = "1";
+	progressInput.value = "0";
+	progressInput.setAttribute("aria-label", "Progress");
+	const timeWrap = document.createElement("div");
+	timeWrap.className = "dsh-glass-music-times";
+	const currentTime = document.createElement("span");
+	currentTime.className = "dsh-glass-music-time-current";
+	currentTime.textContent = "0:00";
+	const totalTime = document.createElement("span");
+	totalTime.className = "dsh-glass-music-time-total";
+	totalTime.textContent = "0:00";
+	timeWrap.append(currentTime, totalTime);
+	progressWrap.append(progressInput, timeWrap);
+	const controls = document.createElement("div");
+	controls.className = "dsh-glass-music-buttons";
+	const prevButton = createButton("⏮", t("prevTrack"));
+	const toggleButton = createButton("⏸", t("lyricPause"));
+	const nextButton = createButton("⏭", t("nextTrack"));
+	const volumeWrap = document.createElement("label");
+	volumeWrap.className = "dsh-glass-volume";
+	volumeWrap.title = t("volumeLabel");
+	const volumeIcon = document.createElement("span");
+	volumeIcon.textContent = "🔊";
+	const volumeInput = document.createElement("input");
+	volumeInput.type = "range";
+	volumeInput.min = "0";
+	volumeInput.max = "1";
+	volumeInput.step = "0.05";
+	volumeInput.value = String(playback.getSnapshot().volume);
+	volumeInput.setAttribute("aria-label", t("volumeLabel"));
+	volumeWrap.append(volumeIcon, volumeInput);
+	controls.append(prevButton, toggleButton, nextButton, volumeWrap);
+	container.append(coverWrap, progressWrap, controls);
+	const disposers = [];
+	const update = () => {
+		const snap = playback.getSnapshot();
+		const visible = snap.song !== null;
+		container.style.display = visible ? "flex" : "none";
+		const cover = snap.song?.cover ?? "";
+		if (cover !== "") {
+			coverImg.src = cover;
+			coverImg.style.display = "block";
+			coverPlaceholder.style.display = "none";
+		} else {
+			coverImg.removeAttribute("src");
+			coverImg.style.display = "none";
+			coverPlaceholder.style.display = "flex";
+		}
+		const duration = Number.isFinite(snap.duration) ? snap.duration : 0;
+		const progress = duration > 0 ? Math.min(1e3, Math.max(0, snap.time / duration * 1e3)) : 0;
+		if (document.activeElement !== progressInput) progressInput.value = String(Math.round(progress));
+		currentTime.textContent = formatTime(snap.time);
+		totalTime.textContent = formatTime(duration);
+		progressInput.disabled = duration <= 0;
+		toggleButton.textContent = snap.playing ? "⏸" : "▶";
+		toggleButton.title = snap.playing ? t("lyricPause") : t("lyricPlay");
+		toggleButton.setAttribute("aria-label", toggleButton.title);
+		prevButton.disabled = !visible || snap.queueIndex <= 0;
+		nextButton.disabled = !visible || snap.queueIndex < 0 || snap.queueIndex >= snap.queue.length - 1;
+		if (document.activeElement !== volumeInput) volumeInput.value = String(snap.volume);
+	};
+	const unsub = playback.subscribe(update);
+	disposers.push(unsub);
+	prevButton.addEventListener("click", () => playback.previous());
+	nextButton.addEventListener("click", () => playback.next());
+	toggleButton.addEventListener("click", () => playback.toggle());
+	volumeInput.addEventListener("input", () => playback.setVolume(Number(volumeInput.value)));
+	progressInput.addEventListener("input", () => {
+		const snap = playback.getSnapshot();
+		const duration = Number.isFinite(snap.duration) ? snap.duration : 0;
+		if (duration > 0) playback.seek(Number(progressInput.value) / 1e3 * duration);
+	});
+	const tryAttach = () => {
+		const sessionLog = findSessionLogButton();
+		if (sessionLog === null) return false;
+		const rect = sessionLog.getBoundingClientRect();
+		container.style.position = "fixed";
+		container.style.top = `${rect.bottom + 30}px`;
+		const cardWidth = container.offsetWidth || 180;
+		const maxLeft = window.innerWidth - cardWidth - 8;
+		container.style.left = `${Math.max(8, Math.min(rect.left, maxLeft))}px`;
+		container.style.zIndex = "1000";
+		if (container.parentElement !== document.body) document.body.appendChild(container);
+		container.classList.add(FIXED_CLASS);
+		return true;
+	};
+	if (!tryAttach()) {
+		document.body.appendChild(container);
+		container.style.position = "fixed";
+		container.style.top = "56px";
+		container.style.left = "12px";
+		container.style.zIndex = "1000";
+		container.classList.add(FIXED_CLASS);
+		const retryTimer = window.setInterval(() => {
+			if (tryAttach()) window.clearInterval(retryTimer);
+		}, 500);
+		const timeout = window.setTimeout(() => window.clearInterval(retryTimer), 1e4);
+		disposers.push(() => {
+			window.clearInterval(retryTimer);
+			window.clearTimeout(timeout);
+		});
+	}
+	const reposition = () => {
+		if (!tryAttach()) {
+			document.body.appendChild(container);
+			container.style.position = "fixed";
+			container.style.top = "56px";
+			container.style.left = "12px";
+			container.style.zIndex = "1000";
+			container.classList.add(FIXED_CLASS);
+		}
+	};
+	window.addEventListener("scroll", reposition, true);
+	window.addEventListener("resize", reposition);
+	disposers.push(() => {
+		window.removeEventListener("scroll", reposition, true);
+		window.removeEventListener("resize", reposition);
+	});
+	const keepAlive = window.setInterval(() => {
+		if (!container.isConnected) {
+			if (!tryAttach()) {
+				document.body.appendChild(container);
+				container.style.position = "fixed";
+				container.style.top = "56px";
+				container.style.left = "12px";
+				container.style.zIndex = "1000";
+				container.classList.add(FIXED_CLASS);
+			}
+		}
+	}, 2e3);
+	disposers.push(() => window.clearInterval(keepAlive));
+	update();
+	return () => {
+		for (const dispose of disposers.splice(0)) dispose();
+		container.remove();
+	};
 }
 //#endregion
 //#region src/client/index.ts
@@ -4535,17 +4954,25 @@ function apply(ctx) {
 	const engine = new GlassEngine();
 	ctx.effect(() => ctx.theme.overrideTokens(NS, GLASS_TOKENS), "dsh-glass-ui: surface tokens");
 	ctx.effect(() => {
+		let disposed = false;
 		loadConfig().then((config) => {
+			if (disposed) return;
 			initLyricPos(config.lyricPos);
 			engine.apply(config);
-		}).catch(() => engine.apply({ ...DEFAULT_CONFIG }));
-		return () => engine.dispose();
+		}).catch(() => {
+			if (!disposed) engine.apply({ ...DEFAULT_CONFIG });
+		});
+		return () => {
+			disposed = true;
+			engine.dispose();
+		};
 	}, "dsh-glass-ui: glass engine");
 	ctx.effect(() => ctx.locale.register(NS, {
 		zh,
 		en
 	}), "dsh-glass-ui: dictionaries");
 	const t = ctx.locale.bind(NS);
+	ctx.effect(() => mountMusicControls(t), "dsh-glass-ui: music controls");
 	ctx.slots.inject("conversation.composer.dock", () => ctx.slots.register({
 		name: "conversation.composer.dock",
 		id: "dsh-glass-lyrics",

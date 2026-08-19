@@ -17,7 +17,7 @@ import {
 import { FONT_PRESETS, type Translate } from './locales.ts'
 import styles from './GlassPanel.module.css'
 import { NeteasePanel } from './NeteasePanel.tsx'
-import type { LyricPos } from './lyrics.ts'
+import { setLyricPos, type LyricPos } from './lyrics.ts'
 
 export interface GlassPanelProps {
   t: Translate
@@ -55,6 +55,9 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
   const [uploading, setUploading] = useState<BgType | 'font' | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const saveTimer = useRef<number | undefined>(undefined)
+  /** monotonically increasing save id — a stale save response must not
+   *  overwrite newer local edits (the debounce only gates the request). */
+  const saveSeq = useRef(0)
   const imageInput = useRef<HTMLInputElement>(null)
   const videoInput = useRef<HTMLInputElement>(null)
   const fontInput = useRef<HTMLInputElement>(null)
@@ -85,11 +88,19 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
     engine.apply(next)
     setSaveState('saving')
     window.clearTimeout(saveTimer.current)
+    const seq = ++saveSeq.current
     saveTimer.current = window.setTimeout(() => {
       saveConfig(next)
-        .then((saved) => setConfig(saved))
-        .then(() => setSaveState('saved'))
+        .then((saved) => {
+          if (seq !== saveSeq.current) return // a newer edit landed meanwhile
+          setConfig(saved)
+        })
+        .then(() => {
+          if (seq !== saveSeq.current) return
+          setSaveState('saved')
+        })
         .catch((err: unknown) => {
+          if (seq !== saveSeq.current) return
           setSaveState('fail')
           setToast(t('saveFail', { error: err instanceof Error ? err.message : String(err) }))
         })
@@ -109,7 +120,9 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
           : [...config.bgImages, url]
         update({ ...config, bgType: 'image', bgImage: url, bgImages, bgVideo: '' })
       } else {
-        update({ ...config, bgType: 'video', bgVideo: url, bgImage: '', bgImages: [] })
+        // keep the image list — switching to a video wallpaper must not
+        // destroy the user's uploaded image collection
+        update({ ...config, bgType: 'video', bgVideo: url })
       }
     } catch (err) {
       setToast(t('uploadFail', { error: err instanceof Error ? err.message : String(err) }))
@@ -184,6 +197,7 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
   function reset(): void {
     window.clearTimeout(saveTimer.current)
     const next = { ...DEFAULT_CONFIG }
+    setLyricPos(next.lyricPos)
     void saveConfig(next)
       .then(() => {
         setConfig(next)
@@ -210,6 +224,7 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
     try {
       const parsed = JSON.parse(await file.text()) as Partial<GlassConfig>
       const next = normalizeConfig(parsed)
+      setLyricPos(next.lyricPos)
       await saveConfig(next)
       setConfig(next)
       engine.apply(next)
@@ -453,7 +468,12 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
       <NeteasePanel
         t={t}
         lyricPos={config.lyricPos}
-        onLyricPos={(pos: LyricPos) => update({ ...config, lyricPos: pos })}
+        onLyricPos={(pos: LyricPos) => {
+          // keep the live dock store in sync — otherwise the setting only
+          // takes effect after a page reload (initLyricPos)
+          setLyricPos(pos)
+          update({ ...config, lyricPos: pos })
+        }}
         neteaseProxy={config.neteaseProxy}
         onNeteaseProxy={(proxy: string) => update({ ...config, neteaseProxy: proxy })}
         neteaseApiBase={config.neteaseApiBase}

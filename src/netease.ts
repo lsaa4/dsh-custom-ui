@@ -1,6 +1,6 @@
 /**
  * NetEase Cloud Music integration (host half).
- * Routes: /netease/weapi, /netease/lyric, /netease/login/status,
+ * Routes: /netease/weapi, /netease/lyric,
  * /netease/account, /netease/logout, /netease/cookie, /netease/hot-playlists,
  * /netease/search, /netease/song-url.
  */
@@ -406,11 +406,19 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
     path: '/netease/hot-playlists',
     handler: async (_req, res) => {
       try {
-        const json = await publicJson(
-          '/api/playlist/highquality/list?cat=%E5%85%A8%E9%83%A8&limit=20',
-        ) as {
-          playlists?: Array<{ id?: number; name?: string; trackCount?: number }>
-        }
+        const apiBase = readApiBase()
+        const json = apiBase !== ''
+          ? await remoteJson(
+              `${apiBase}/top/playlist?limit=20&order=hot`,
+              readCookie() !== '' ? { cookie: readCookie() } : {},
+            ) as {
+              playlists?: Array<{ id?: number; name?: string; trackCount?: number }>
+            }
+          : await publicJson(
+              '/api/playlist/highquality/list?cat=%E5%85%A8%E9%83%A8&limit=20',
+            ) as {
+              playlists?: Array<{ id?: number; name?: string; trackCount?: number }>
+            }
         sendJson(res, 200, {
           playlists: (json.playlists ?? [])
             .filter((p) => typeof p.id === 'number' && typeof p.name === 'string')
@@ -444,6 +452,7 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
                 name?: string
                 artists?: Array<{ name?: string }>
                 album?: { name?: string }
+                  picUrl?: string
                 duration?: number
               }> }
             }
@@ -456,6 +465,7 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
                 artists?: Array<{ name?: string }>
                 album?: { name?: string }
                 duration?: number
+                  picUrl?: string
               }> }
             }
         const songs = json.result?.songs ?? []
@@ -467,6 +477,7 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
               name: s.name,
               artists: (s.artists ?? []).map((a) => a.name ?? '').filter((x) => x !== '').join(' / '),
               album: s.album?.name,
+                cover: (s.album as unknown as { picUrl?: string } | undefined)?.picUrl,
               durationMs: s.duration,
             })),
         })
@@ -511,33 +522,6 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
         sendJson(res, 200, { url })
       } catch (err) {
         sendText(res, 502, err instanceof Error ? err.message : 'song url failed')
-      }
-    },
-  }))
-
-  disposers.push(host.register({
-    kind: 'exact',
-    path: '/netease/login/status',
-    handler: async (req, res) => {
-      if (req.method !== 'POST') {
-        sendText(res, 405, 'method not allowed')
-        return
-      }
-      try {
-        const body = JSON.parse((await readSmallBody(req)).toString('utf8')) as { key?: string }
-        const key = String(body.key ?? '')
-        const cookie = readCookie()
-        const { json, setCookie } = await weapiRequest('/weapi/login/qrcode/client/login', {
-          key,
-          type: 1,
-        }, cookie)
-        const code = (json as { code?: number }).code
-        if (code === 802 || code === 800) {
-          writeCookie(mergeCookies(cookie, setCookie))
-        }
-        sendJson(res, 200, json)
-      } catch (err) {
-        sendText(res, 502, err instanceof Error ? err.message : 'login poll failed')
       }
     },
   }))

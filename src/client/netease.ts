@@ -12,6 +12,7 @@ export interface NeteaseSong {
   name: string
   artists: string
   album?: string
+  cover?: string
   durationMs?: number
 }
 
@@ -33,9 +34,13 @@ export async function weapi<T>(path: string, data: Record<string, unknown> = {})
 }
 
 export async function getAccount(): Promise<NeteaseAccount> {
+    try {
   const res = await fetch('/netease/account', { cache: 'no-store' })
   if (!res.ok) return { loggedIn: false }
   return (await res.json()) as NeteaseAccount
+    } catch {
+      return { loggedIn: false }
+    }
 }
 
 export async function logout(): Promise<void> {
@@ -170,6 +175,7 @@ export async function fetchPlaylistTracks(id: number): Promise<NeteaseSong[]> {
       name?: string
       ar?: Array<{ name?: string }>
       al?: { name?: string }
+        picUrl?: string
       dt?: number
     }> }
   }>('/weapi/v6/playlist/detail', { id, n: 1000, s: 8 })
@@ -181,6 +187,7 @@ export async function fetchPlaylistTracks(id: number): Promise<NeteaseSong[]> {
       name: t.name as string,
       artists: (t.ar ?? []).map((a) => a.name ?? '').filter((s) => s !== '').join(' / '),
       album: t.al?.name,
+        cover: (t.al as unknown as { picUrl?: string } | undefined)?.picUrl,
       durationMs: t.dt,
     }))
 }
@@ -193,6 +200,7 @@ export async function fetchDailySongs(): Promise<NeteaseSong[]> {
       name?: string
       ar?: Array<{ name?: string }>
       al?: { name?: string }
+        picUrl?: string
       dt?: number
     }> }
   }>('/weapi/v1/discovery/recommend/songs', {})
@@ -204,6 +212,7 @@ export async function fetchDailySongs(): Promise<NeteaseSong[]> {
       name: s.name as string,
       artists: (s.ar ?? []).map((a) => a.name ?? '').filter((x) => x !== '').join(' / '),
       album: s.al?.name,
+        cover: (s.al as unknown as { picUrl?: string } | undefined)?.picUrl,
       durationMs: s.dt,
     }))
 }
@@ -249,6 +258,7 @@ export async function searchSongs(query: string): Promise<NeteaseSong[]> {
     name: string
     artists: string
     album?: string
+      cover?: string
     durationMs?: number
   }> }
   return json.songs ?? []

@@ -76,17 +76,22 @@ export class GlassEngine {
   }
 
   private updateFontFace(config: GlassConfig): void {
-    const existing = document.getElementById(FONT_FACE_ID)
+    const existing = document.getElementById(FONT_FACE_ID) as HTMLStyleElement | null
     if (config.fontUrl === '' || !config.font.includes(CUSTOM_FONT_FAMILY)) {
       existing?.remove()
       return
     }
-    if (existing !== null) return
-    const style = document.createElement('style')
-    style.id = FONT_FACE_ID
-    style.textContent =
+    const css =
       `@font-face{font-family:${CUSTOM_FONT_FAMILY};src:url("${config.fontUrl}") format("woff2"),` +
       `url("${config.fontUrl}") format("woff"),url("${config.fontUrl}") format("truetype");font-display:swap}`
+    if (existing !== null) {
+      // re-uploading a font must repoint the live @font-face, not skip it
+      if (existing.textContent !== css) existing.textContent = css
+      return
+    }
+    const style = document.createElement('style')
+    style.id = FONT_FACE_ID
+    style.textContent = css
     document.head.appendChild(style)
     this.disposers.push(() => style.remove())
   }
@@ -134,10 +139,21 @@ export class GlassEngine {
     return el
   }
 
+  /**
+   * Canonical absolute form of a wallpaper URL. Element `.src` getters return
+   * absolute URLs while config values are relative (`/glass-ui/media/…`), so
+   * raw string comparison can never dedupe — every apply() would re-probe the
+   * wallpaper. Resolve both sides through here.
+   */
+  private absUrl(url: string): string {
+    return new URL(url, window.location.href).href
+  }
+
   private renderImage(url: string): void {
     const host = this.ensureBgHost()
+    const abs = this.absUrl(url)
     const activeEl = this.imageEl(this.active)
-    if (activeEl.src === url) return
+    if (activeEl.src === abs) return
     const seq = ++this.imageSeq
     const probe = new Image()
     probe.onload = () => {
@@ -145,7 +161,7 @@ export class GlassEngine {
       if (!host.isConnected) return // engine disposed meanwhile
       const nextKey = this.active === 'A' ? 'B' : 'A'
       const nextEl = this.imageEl(nextKey)
-      nextEl.src = url
+      nextEl.src = abs
       nextEl.style.opacity = '0'
       // flush style, then crossfade
       void nextEl.offsetWidth
@@ -158,7 +174,7 @@ export class GlassEngine {
     probe.onerror = () => {
       // keep the current image; never blank the background
     }
-    probe.src = url
+    probe.src = abs
   }
 
   /**
@@ -172,7 +188,8 @@ export class GlassEngine {
    */
   private renderVideo(url: string): void {
     const host = this.ensureBgHost()
-    if (this.currentVideo !== null && this.currentVideo.src === url) return
+    const abs = this.absUrl(url)
+    if (this.currentVideo !== null && this.currentVideo.src === abs) return
     const seq = ++this.videoSeq
 
     const probe = document.createElement('video')
@@ -216,7 +233,7 @@ export class GlassEngine {
 
     probe.addEventListener('loadeddata', onReady)
     probe.addEventListener('error', onError)
-    probe.src = url
+    probe.src = abs
     probe.load()
     host.appendChild(probe)
   }
@@ -284,6 +301,16 @@ export class GlassEngine {
     bg?.remove()
     document.getElementById(FONT_FACE_ID)?.remove()
     document.getElementById(CUSTOM_CSS_ID)?.remove()
+    // drop the :root variables too, so an unloaded plugin leaves no trace
+    const root = document.documentElement
+    for (const name of [
+      '--glass-opacity', '--glass-blur', '--glass-font', '--glass-font-url',
+      '--glass-bg-type', '--glass-bg-image', '--glass-bg-video', '--glass-bg-mask',
+      '--glass-bg-fit', '--glass-anim-level',
+      '--glass-surface-light', '--glass-surface-dark',
+    ]) {
+      root.style.removeProperty(name)
+    }
     const body = document.body
     body.classList.remove(
       'dsh-glass-on',

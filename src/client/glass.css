@@ -175,3 +175,113 @@ body.dsh-glass-anim-none #dsh-glass-bg video { transition: none !important; }
   body.dsh-glass-anim-strong #dsh-glass-bg img,
   body.dsh-glass-anim-strong #dsh-glass-bg video { transition: none; }
 }
+
+/* ---- compact music player card below the session-log button ---- */
+.dsh-glass-music-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 180px;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid rgba(127, 127, 127, 0.2);
+  border-radius: 12px;
+  background: rgba(127, 127, 127, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.dsh-glass-music-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(127, 127, 127, 0.12);
+}
+
+.dsh-glass-music-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.dsh-glass-music-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 32px;
+  color: rgba(127, 127, 127, 0.7);
+}
+
+.dsh-glass-music-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dsh-glass-music-progress input[type="range"] {
+  width: 100%;
+  height: 4px;
+  accent-color: var(--dsw-alias-brand-primary, #4176e6);
+}
+
+.dsh-glass-music-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.dsh-glass-music-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dsh-glass-music-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.dsh-glass-music-controls button:hover:not(:disabled) {
+  background: rgba(65, 118, 230, 0.12);
+}
+
+.dsh-glass-music-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.dsh-glass-volume {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+}
+
+.dsh-glass-volume input[type="range"] {
+  width: 48px;
+  height: 3px;
+  accent-color: var(--dsw-alias-brand-primary, #4176e6);
+}
+
+.dsh-glass-music-controls--fixed {
+  position: fixed;
+  z-index: 1000;
+}

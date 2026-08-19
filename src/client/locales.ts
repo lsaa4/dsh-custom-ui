@@ -91,6 +91,12 @@ export const zh = {
   lyricHot: '热门歌单…',
   lyricSearch: '搜索',
   lyricSearchPh: '搜索歌曲…',
+  lyricUnavailable: '该歌曲暂不可播放（版权/VIP 限制）',
+  lyricUnknownArtist: '未知歌手',
+  lyricPaused: '已暂停',
+    prevTrack: '上一首',
+    nextTrack: '下一首',
+    volumeLabel: '音量',
 } as const
 
 export const en = {
@@ -184,6 +190,12 @@ export const en = {
   lyricHot: 'Hot playlists…',
   lyricSearch: 'Search',
   lyricSearchPh: 'Search songs…',
+  lyricUnavailable: 'This song is not playable (VIP/licensing restrictions)',
+  lyricUnknownArtist: 'Unknown artist',
+  lyricPaused: 'Paused',
+    prevTrack: 'Previous',
+    nextTrack: 'Next',
+    volumeLabel: 'Volume',
 } as const
 
 export type Dict = typeof zh | typeof en

@@ -62,21 +62,25 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
   const [toast, setToast] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pollTimer = useRef<number | undefined>(undefined)
+        const mountedRef = useRef(true)
 
   // current playback (for the small control row)
   const [playing, setPlaying] = useState(false)
   const [currentSongId, setCurrentSongId] = useState<number | null>(null)
+        const [volume, setVolume] = useState(playback.getSnapshot().volume)
   useEffect(() => {
     const unsub = playback.subscribe(() => {
       const snap = playback.getSnapshot()
       setPlaying(snap.playing)
       setCurrentSongId(snap.song?.id ?? null)
+                setVolume(snap.volume)
     })
     return unsub
   }, [])
 
   useEffect(() => {
     let cancelled = false
+            mountedRef.current = true
     // hot playlists work without login (public API fallback)
     void fetchHotPlaylists().then((list) => {
       if (!cancelled) setHotPlaylists(list)
@@ -91,12 +95,100 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
       }
     })
     return () => {
+                mountedRef.current = false
       cancelled = true
       if (pollTimer.current !== undefined) window.clearInterval(pollTimer.current)
     }
   }, [])
 
+  function clearQrPoll(): void {
+    if (pollTimer.current !== undefined) {
+      window.clearTimeout(pollTimer.current)
+      pollTimer.current = undefined
+    }
+    setPolling(false)
+  }
+
+  function scheduleQrPoll(key: string): void {
+    if (!mountedRef.current) return
+    if (pollTimer.current !== undefined) window.clearTimeout(pollTimer.current)
+    setPolling(true)
+    pollTimer.current = window.setTimeout(async () => {
+      pollTimer.current = undefined
+      if (!mountedRef.current) return
+      try {
+        const status = await pollQrLogin(key)
+        if (!mountedRef.current) return
+        if (status.code === 803) {
+          clearQrPoll()
+          setQrKey(null)
+          const acc: NeteaseAccount = {
+            loggedIn: true,
+            nickname: status.nickname,
+          }
+          setAccount(acc)
+          setToast(t('lyricLoginOk', { name: status.nickname ?? '' }))
+          if (acc.uid === undefined) {
+            const fresh = await getAccount()
+            if (!mountedRef.current) return
+            setAccount(fresh.loggedIn ? fresh : acc)
+            if (fresh.uid !== undefined) {
+              void fetchPlaylists(fresh.uid).then((list) => {
+                if (mountedRef.current) setPlaylists(list)
+              })
+            }
+          }
+        } else if (status.code === 802) {
+          setQrState(t('lyricQrConfirm'))
+          scheduleQrPoll(key)
+        } else if (status.code === 800) {
+          clearQrPoll()
+          setQrState(t('lyricQrExpired'))
+        } else {
+          scheduleQrPoll(key)
+        }
+      } catch {
+        if (mountedRef.current) scheduleQrPoll(key)
+      }
+    }, 2000)
+  }
+
   async function startQrLogin(): Promise<void> {
+    clearQrPoll()
+    setQrKey(null)
+    setQrImg(null)
+    setBusy(true)
+    setQrState(t('lyricQrLoading'))
+    try {
+      const { key, qrimg } = await requestQrKey()
+      if (!mountedRef.current) return
+      setQrKey(key)
+      setQrImg(qrimg ?? null)
+      if (qrimg === undefined || qrimg === '') {
+        // remote server gave no image — render locally as fallback
+        const canvas = canvasRef.current
+        if (canvas !== null) {
+          await QRCode.toCanvas(canvas, `https://music.163.com/login?codekey=${key}`, {
+            width: 168,
+            margin: 1,
+          })
+        }
+      }
+      if (!mountedRef.current) return
+      setQrState(t('lyricQrScan'))
+      scheduleQrPoll(key)
+    } catch (err) {
+      if (mountedRef.current) {
+        setToast(t('lyricQrFail', { error: err instanceof Error ? err.message : String(err) }))
+      }
+    } finally {
+      if (mountedRef.current) setBusy(false)
+    }
+  }
+
+  /*
+
+  async function startQrLoginLegacy(): Promise<void> {
     try {
       setBusy(true)
       setQrState(t('lyricQrLoading'))
@@ -130,8 +222,8 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
             setAccount(acc)
             setToast(t('lyricLoginOk', { name: status.nickname ?? '' }))
             if (acc.uid === undefined) {
-              const fresh = await getAccount()
-              setAccount(fresh)
+              const fresh = await getAccount().catch(() => null).catch(() => null)
+              if (fresh !== null) setAccount(fresh.loggedIn ? fresh : acc)
               if (fresh.uid !== undefined) {
                 void fetchPlaylists(fresh.uid).then(setPlaylists)
               }
@@ -144,7 +236,7 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
             if (pollTimer.current !== undefined) window.clearInterval(pollTimer.current)
           }
         } catch {
-          /* keep polling */
+          // keep polling
         }
       }, 2000)
     } catch (err) {
@@ -153,12 +245,21 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
       setBusy(false)
     }
   }
+  */
 
   function cancelQr(): void {
+    clearQrPoll()
+    setQrKey(null)
+    setQrImg(null)
+  }
+
+  /*
+  function cancelQrLegacy(): void {
     if (pollTimer.current !== undefined) window.clearInterval(pollTimer.current)
     setPolling(false)
     setQrKey(null)
   }
+  */
 
   async function doCookieLogin(): Promise<void> {
     // tolerate multi-line pastes and missing '=' separators (normalize repairs)
@@ -268,7 +369,6 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
         <span className={styles.fieldLabel}>{t('lyricProxyLabel')}</span>
         <Input
           className={styles.grow}
-          placeholder="http://127.0.0.1:7890 / socks5://127.0.0.1:10808"
           value={neteaseProxy}
           onChange={(e) => onNeteaseProxy(e.target.value.trim())}
         />
@@ -278,7 +378,6 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
         <span className={styles.fieldLabel}>{t('lyricApiLabel')}</span>
         <Input
           className={styles.grow}
-          placeholder="https://music.mcseekeri.com"
           value={neteaseApiBase}
           onChange={(e) => onNeteaseApiBase(e.target.value.trim())}
         />
@@ -449,6 +548,26 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
 
       {/* ---- playback control ---- */}
       <div className={styles.row}>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={playback.getSnapshot().song === null || playback.getSnapshot().queueIndex <= 0}
+            onClick={() => playback.previous()}
+            title={t('prevTrack')}
+              aria-label={t('prevTrack')}
+          >
+            ⏮
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={playback.getSnapshot().song === null || playback.getSnapshot().queueIndex < 0 || playback.getSnapshot().queueIndex >= playback.getSnapshot().queue.length - 1}
+            onClick={() => playback.next()}
+            title={t('nextTrack')}
+              aria-label={t('nextTrack')}
+          >
+            ⏭
+          </Button>
         <Button
           size="sm"
           variant="outline"
@@ -465,6 +584,18 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, neteaseProxy, onNeteaseP
         >
           {t('lyricStop')}
         </Button>
+          <label className={styles.volume}>
+            <span>{t('volumeLabel')}</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              onChange={(e) => playback.setVolume(Number(e.target.value))}
+              aria-label={t('volumeLabel')}
+            />
+          </label>
         <span className={styles.nowPlaying}>
           {playback.getSnapshot().song !== null
             ? `${playback.getSnapshot().song!.name} - ${playback.getSnapshot().song!.artists}`

@@ -14,7 +14,7 @@
  *   GET    /glass-ui/media/<file>    → static media file
  *   DELETE /glass-ui/media/<file>    → delete media file
  */
-import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, rmSync } from 'node:fs'
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
@@ -146,6 +146,62 @@ function writeConfig(config: GlassConfig): void {
   renameSync(tmp, configPath()) // atomic publish
 }
 
+// ---------------------------------------------------------------------------
+// media garbage collection
+// ---------------------------------------------------------------------------
+
+/** Collect the media file names referenced by a config (relative or absolute
+ *  `/glass-ui/media/<file>` URLs). */
+function referencedMedia(config: GlassConfig): Set<string> {
+  const refs = new Set<string>()
+  for (const u of [config.fontUrl, config.bgImage, config.bgVideo, ...config.bgImages]) {
+    if (typeof u !== 'string' || u === '') continue
+    // capture the file name directly — never derive it with length arithmetic
+    const m = /\/(glass-ui\/media\/)([a-zA-Z0-9._-]+)$/.exec(u)
+    if (m === null) continue
+    const name = m[2]!
+    if (SAFE_NAME.test(name)) refs.add(name)
+  }
+  return refs
+}
+
+/**
+ * Only sweep orphans older than this — a fresh upload referenced by the
+ * config another tab just saved must survive a stale writer's save, and an
+ * in-flight upload must not be deleted mid-stream.
+ */
+const GC_MIN_AGE_MS = 60 * 60 * 1000
+
+/**
+ * Delete media files the current config no longer references. Runs after
+ * every config save and once at plugin start, so repeated uploads, resets and
+ * config imports cannot pile up orphaned files (a 1 GB wallpaper left behind
+ * by a reset used to stay on disk forever). Incomplete `.tmp` uploads are
+ * swept immediately; other orphans only once older than GC_MIN_AGE_MS.
+ */
+function gcMedia(config: GlassConfig): void {
+  try {
+    const dir = mediaDir()
+    if (!existsSync(dir)) return
+    const refs = referencedMedia(config)
+    for (const name of readdirSync(dir)) {
+      const isTmp = name.endsWith('.tmp')
+      if (!isTmp && !(SAFE_NAME.test(name) && !refs.has(name))) continue
+      if (!isTmp) {
+        try {
+          const ageMs = Date.now() - statSync(join(dir, name)).mtimeMs
+          if (ageMs < GC_MIN_AGE_MS) continue
+        } catch {
+          continue
+        }
+      }
+      rmSync(join(dir, name), { force: true })
+    }
+  } catch {
+    /* GC is best-effort; never block config handling on it */
+  }
+}
+
 /** Uploads are only accepted for these kinds/extensions (safety whitelist). */
 const MEDIA_EXT: Record<string, string[]> = {
   image: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'],
@@ -247,6 +303,12 @@ export const name = 'dsh-glass-ui'
 
 export function apply(ctx: HostContext): void {
   ctx.inject(['webServer'], (host) => {
+    // sweep orphaned media once at startup (crash leftovers, pre-GC uploads)
+    host.effect(() => {
+      gcMedia(readConfig())
+      return undefined
+    }, 'dsh-glass-ui: startup media gc')
+
     // config read/write
     host.effect(() => host.webServer.register({
       kind: 'exact',
@@ -258,7 +320,7 @@ export function apply(ctx: HostContext): void {
         }
         if (req.method === 'PUT') {
           try {
-            const body = await readSmallBody(req, 64 * 1024)
+            const body = await readSmallBody(req, 256 * 1024)
             const parsed = JSON.parse(body.toString('utf8')) as Partial<GlassConfig>
             const merged = { ...DEFAULT_CONFIG, ...parsed } as GlassConfig
             merged.opacity = clampNumber(merged.opacity, 0.1, 0.95, DEFAULT_CONFIG.opacity)
@@ -280,8 +342,10 @@ export function apply(ctx: HostContext): void {
             merged.lyricPos = ['inline', 'end', 'hidden'].includes(merged.lyricPos) ? merged.lyricPos : 'inline'
             merged.neteaseProxy = String(merged.neteaseProxy ?? '').trim().slice(0, 300)
             merged.neteaseApiBase = String(merged.neteaseApiBase ?? '').trim().slice(0, 300)
-            writeConfig(normalizeHostConfig(merged))
-            sendJson(res, 200, normalizeHostConfig(merged))
+            const normalized = normalizeHostConfig(merged)
+            writeConfig(normalized)
+            gcMedia(normalized)
+            sendJson(res, 200, normalized)
           } catch (err) {
             sendText(res, 400, err instanceof Error ? err.message : 'bad config')
           }
@@ -347,7 +411,13 @@ export function apply(ctx: HostContext): void {
       kind: 'prefix',
       path: '/glass-ui/media',
       handler: (req, res) => {
-        const rel = decodeURIComponent(req.url ?? '').replace(/^\/glass-ui\/media\/?/, '')
+        let rel: string
+        try {
+          rel = decodeURIComponent(req.url ?? '').replace(/^\/glass-ui\/media\/?/, '')
+        } catch {
+          sendText(res, 400, 'bad url')
+          return
+        }
         if (rel === '' || rel.includes('/') || !SAFE_NAME.test(rel)) {
           sendText(res, 404, 'not found')
           return
@@ -367,17 +437,23 @@ export function apply(ctx: HostContext): void {
           return
         }
         const file = join(mediaDir(), rel)
-        if (!existsSync(file)) {
+        let size: number
+        try {
+          size = statSync(file).size
+        } catch {
           sendText(res, 404, 'not found')
           return
         }
         res.writeHead(200, {
           'content-type': CONTENT_TYPES[ext] ?? 'application/octet-stream',
           'cache-control': 'public, max-age=31536000, immutable',
-          'content-length': String(readFileSync(file).length),
+          'content-length': String(size),
         })
         if (req.method === 'GET') {
-          res.end(readFileSync(file))
+          // stream — a 1 GB wallpaper must never be buffered whole in memory
+          const stream = createReadStream(file)
+          stream.on('error', () => res.destroy())
+          stream.pipe(res)
         } else {
           res.end()
         }

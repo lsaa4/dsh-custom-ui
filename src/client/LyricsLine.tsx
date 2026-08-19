@@ -1,29 +1,38 @@
-/** The lyric line rendered in the composer dock, level with the stats row. */
+/**
+ * The lyric line rendered in the composer dock, level with the stats row.
+ * The slot renderer injects a `t` bound to this entry's locale namespace
+ * (registered via `locale: NS`); it is optional here only for type safety.
+ */
 import { useSyncExternalStore } from 'react'
 import {
   getLyricPos,
   playback,
   subscribeLyricPos,
 } from './lyrics.ts'
+import type { Translate } from './locales.ts'
 import styles from './LyricsLine.module.css'
 
-export function LyricsLine(): JSX.Element | null {
+export interface LyricsLineProps {
+  t?: Translate
+}
+
+export function LyricsLine({ t }: LyricsLineProps): JSX.Element | null {
   const state = useSyncExternalStore(playback.subscribe, playback.getSnapshot)
   const pos = useSyncExternalStore(subscribeLyricPos, getLyricPos)
 
   if (pos === 'hidden') return null
   if (state.song === null) return null
 
-  const title = `${state.song.name} - ${state.song.artists || '未知歌手'}`
+  const title = `${state.song.name} - ${state.song.artists || (t !== undefined ? t('lyricUnknownArtist') : '未知歌手')}`
   const line = state.loading
-    ? '加载中…'
+    ? (t !== undefined ? t('lyricLoading') : '加载中…')
     : state.error !== null
-      ? state.error
+      ? (t !== undefined ? t(state.error) : '该歌曲暂不可播放（版权/VIP 限制）')
       : state.currentLine !== null
         ? state.currentLine.text
         : state.playing
           ? '♪'
-          : '已暂停'
+          : (t !== undefined ? t('lyricPaused') : '已暂停')
 
   return (
     <span

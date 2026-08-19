@@ -147,3 +147,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.volume {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.volume input[type="range"] {
+  width: 80px;
+  accent-color: var(--dsw-alias-brand-primary, #4176e6);
+}

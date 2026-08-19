@@ -9,10 +9,13 @@
 - **模糊滑块**：背景模糊半径 4–40px 实时调节
 - **自定义字体**：预设字体 + 任意字体族输入 + 上传字体文件（woff2/woff/ttf/otf，自动注入 `@font-face`）
 - **背景壁纸**：上传图片（jpg/png/webp/gif/avif）或动态壁纸视频（mp4/webm/mov，≤1GB，流式写入磁盘，`<video>` 自动循环播放）
-- **三种背景样式**：左下角（柔和淡出）→ 整个界面（内容呈毛玻璃）→ 全屏（清晰通透），切换平滑过渡
-- **柔和动画**：界面渐渐显现、交互过渡温柔平滑（支持 `prefers-reduced-motion`，可一键关闭）
+- **背景模式**：无背景 / 图片背景 / 动态壁纸三选一；图片支持**多图轮播**（可调间隔）、**遮罩**（暗化提高可读性）与三种铺放方式（铺满 / 完整显示 / 原始大小），切换平滑过渡
+- **网易云音乐**：扫码或 Cookie 登录、我的歌单 / 每日推荐 / 热门歌单 / 搜索、播放队列，输入框信息栏实时显示**滚动歌词**（位置可调：信息栏内 / 最右 / 隐藏）；支持 HTTP/SOCKS 代理与远程 API 服务器两种绕风控方案
+- **柔和动画**：界面渐渐显现、交互过渡温柔平滑（无 / 轻柔 / 明显三档，支持 `prefers-reduced-motion`）
+- **自定义 CSS**：高级用户可粘贴任意样式，即时生效并自动保存
+- **配置分享**：一键导出 / 导入配置 JSON
 - **首屏无闪烁**：host 端在 index.html 注入已保存的配置，刷新页面立即呈现玻璃效果
-- 配置持久化于 `$DSH_HOME/data/glass-ui/config.json`，卸载插件后自动恢复默认外观
+- 配置持久化于 `$DSH_HOME/data/glass-ui/config.json`；上传的媒体由 host 自动垃圾回收（未被配置引用的文件会被清理），卸载插件后自动恢复默认外观
 
 ## 安装
 
@@ -45,8 +48,8 @@ dsh plugin --profile web remove dsh-glass-ui
 1. 打开 **设置**（左下角齿轮）→ 侧边栏 **自定义UI设计**
 2. 拖动 **透明度 / 模糊** 滑块，实时预览毛玻璃效果
 3. **字体**：点选预设，或输入自定义字体族，或上传字体文件
-4. **背景壁纸**：选择 图片/动态壁纸，上传你的素材
-5. **背景样式**：左下角 / 整个界面 / 全屏，三选一切换有平滑过渡
+4. **背景壁纸**：选择 无/图片/动态壁纸，上传你的素材；图片可多张轮播
+5. **网易云音乐**：扫码登录（或粘贴网页版 Cookie），浏览歌单 / 每日推荐 / 热门歌单 / 搜索后点击歌曲即播放，歌词实时显示在输入框信息栏
 6. 所有修改即时生效、自动保存（状态显示"已保存"）
 
 ## 开发
@@ -74,10 +77,12 @@ pnpm add "link:<本仓库绝对路径>"
 | 浏览器半契约 | `window.__ModuleLoader__.load({ id, factory })`，导出 `name` / `inject` / `apply(ctx)` |
 | 表面透明化 | `ctx.theme.overrideTokens()` 把 `--dsw-alias-bg-*` 等覆盖为 `var(--glass-surface-*)`（值跟随 :root 变量，滑块只改变量） |
 | 玻璃模糊 | 背景层 `filter: blur(var(--glass-blur))` + 表面半透明 —— 刻意不用 `backdrop-filter`（它会改变 `#root` 的 containing block，破坏内部 fixed 元素布局） |
+| 壁纸切换 | 图片双缓冲交叉淡入淡出；视频先用隐藏 probe 预载到 `loadeddata` 再淡入（避免黑闪），旧视频随后释放 |
 | 配置持久化 | host 半路由 `GET/PUT /glass-ui/config`，原子写入 `$DSH_HOME/data/glass-ui/config.json` |
-| 媒体上传 | `POST /glass-ui/media`（raw body + `x-media-kind`），白名单校验类型/扩展名/大小，`GET/DELETE /glass-ui/media/<file>` 服务与删除 |
+| 媒体上传 | `POST /glass-ui/media`（raw body + `x-media-kind`），白名单校验类型/扩展名/大小，流式落盘；`GET/HEAD/DELETE /glass-ui/media/<file>` 流式服务与删除；保存配置与启动时自动 GC 未引用文件 |
 | 首屏引导 | `webServer.tapIndex()` 注入 `<style id="dsh-glass-ui-boot">`，刷新无闪烁 |
-| 动画 | `body.dsh-glass-anim` 门控的渐显/过渡，尊重 `prefers-reduced-motion` |
+| 网易云代理 | `POST /netease/weapi`（AES+RSA 加密）、`/netease/lyric`、`/netease/hot-playlists`、`/netease/search`、`/netease/song-url`、`/netease/account`、`/netease/logout`、`/netease/cookie`；直连被墙时可配 HTTP/SOCKS 代理或远程 NeteaseCloudMusicApi 服务器 |
+| 动画 | `body.dsh-glass-anim-*` 门控的渐显/过渡，尊重 `prefers-reduced-motion` |
 
 ## 已知限制
 
@@ -85,6 +90,8 @@ pnpm add "link:<本仓库绝对路径>"
 - 动态壁纸为全屏视频背景，大分辨率视频请控制体积（上限 1GB）
 - 多主题插件并存时由最后激活者生效；设置面板提供"恢复默认"一键还原
 - token 名称随 DSH 版本迭代可能微调，升级 DSH 后如配色异常请重新构建
+- 网易云歌曲直链受版权/VIP 限制，不可播的歌曲会提示并跳过
+- 导出/导入配置只含 URL 引用，不含媒体文件本身（跨机器导入需重新上传素材）
 
 ## License
 

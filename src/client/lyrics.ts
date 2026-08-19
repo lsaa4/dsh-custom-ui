@@ -16,20 +16,32 @@ export interface LyricLine {
   text: string
 }
 
-const LRC_LINE = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]\s*(.*)/
+const LRC_TAG = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]/g
 
+/** One timestamp tag → seconds (e.g. `[1:02.5]` → 62.5). */
+function tagToSeconds(tag: RegExpExecArray): number {
+  const minutes = Number(tag[1] ?? 0)
+  const seconds = Number(tag[2] ?? 0)
+  const fracRaw = tag[3]
+  const frac = fracRaw === undefined ? 0 : Number(fracRaw.padEnd(3, '0')) / 1000
+  return minutes * 60 + seconds + frac
+}
+
+/**
+ * Parse LRC into timed lines. Handles repeated timestamps on one line
+ * (`[00:10][00:20]歌词` → two lines at 10s and 20s) and skips pure metadata
+ * lines (no timestamp tags, e.g. `[ti:...]` / `[ar:...]`).
+ */
 export function parseLrc(lrc: string): LyricLine[] {
   const lines: LyricLine[] = []
   for (const raw of lrc.split('\n')) {
-    const m = LRC_LINE.exec(raw.trim())
-    if (m === null) continue
-    const minutes = Number(m[1] ?? 0)
-    const seconds = Number(m[2] ?? 0)
-    const fracRaw = m[3]
-    const frac = fracRaw === undefined ? 0 : Number(fracRaw.padEnd(3, '0')) / 1000
-    const text = (m[4] ?? '').trim()
+    LRC_TAG.lastIndex = 0
+    const text = raw.replace(LRC_TAG, '').trim()
     if (text === '') continue
-    lines.push({ time: minutes * 60 + seconds + frac, text })
+    let tag: RegExpExecArray | null
+    while ((tag = LRC_TAG.exec(raw)) !== null) {
+      lines.push({ time: tagToSeconds(tag), text })
+    }
   }
   lines.sort((a, b) => a.time - b.time)
   return lines
@@ -58,10 +70,19 @@ export interface PlaybackState {
   duration: number
   currentLine: LyricLine | null
   lyrics: LyricLine[]
-  /** error message when the stream is unavailable (VIP etc.) */
+  /** locale message key when the stream is unavailable (VIP etc.); null = ok */
   error: string | null
   loading: boolean
+  /** audio volume, 0..1 */
+  volume: number
+  /** current playback queue */
+  queue: NeteaseSong[]
+  /** index of the current song in queue */
+  queueIndex: number
 }
+
+/** Locale key for "this song cannot be played (VIP/licensing)". */
+export const PLAYBACK_ERROR_KEY = 'lyricUnavailable'
 
 const EMPTY: PlaybackState = {
   song: null,
@@ -72,6 +93,9 @@ const EMPTY: PlaybackState = {
   lyrics: [],
   error: null,
   loading: false,
+  volume: 1,
+  queue: [],
+  queueIndex: -1,
 }
 
 type Listener = () => void
@@ -84,9 +108,13 @@ class PlaybackManager {
   private queueIndex = -1
   private state: PlaybackState = { ...EMPTY }
   private listeners = new Set<Listener>()
+  /** monotonically increasing play request id — stale async results are dropped */
+  private playSeq = 0
 
   constructor() {
     this.audio.preload = 'auto'
+      this.audio.volume = 1
+      this.audio.volume = 1
     this.audio.addEventListener('timeupdate', () => this.sync())
     this.audio.addEventListener('loadedmetadata', () => this.sync())
     this.audio.addEventListener('play', () => this.sync())
@@ -96,7 +124,7 @@ class PlaybackManager {
       this.playNext()
     })
     this.audio.addEventListener('error', () => {
-      this.state = { ...this.state, playing: false, error: '该歌曲暂不可播放（版权/VIP 限制）' }
+      this.state = { ...this.state, playing: false, error: PLAYBACK_ERROR_KEY }
       this.emit()
     })
   }
@@ -125,23 +153,36 @@ class PlaybackManager {
 
   /** Load and play a song; fetch its stream URL and lyrics. */
   async play(song: NeteaseSong, queue?: NeteaseSong[]): Promise<void> {
+    const seq = ++this.playSeq // supersede any in-flight play()
     if (queue !== undefined) {
       this.queue = queue
       this.queueIndex = queue.findIndex((s) => s.id === song.id)
     }
-    this.state = { ...EMPTY, song, loading: true }
+    this.state = {
+        ...EMPTY,
+        song,
+        loading: true,
+        volume: this.audio.volume,
+        queue: this.queue,
+        queueIndex: this.queueIndex,
+      }
     this.emit()
     const [weapiUrl, lrc] = await Promise.all([
       fetchSongUrl(song.id),
       fetchLyric(song.id).catch(() => ''),
     ])
+    if (seq !== this.playSeq) return // a newer play()/stop() superseded this one
     // weapi URL needs login; fall back to the public outer-url stream
     const url = weapiUrl ?? await fetchPublicSongUrl(song.id)
+    if (seq !== this.playSeq) return
     if (url === null) {
       this.state = {
         ...EMPTY,
         song,
-        error: '该歌曲暂不可播放（VIP/版权限制）',
+        error: PLAYBACK_ERROR_KEY,
+          volume: this.audio.volume,
+          queue: this.queue,
+          queueIndex: this.queueIndex,
       }
       this.emit()
       return
@@ -154,6 +195,7 @@ class PlaybackManager {
     try {
       await this.audio.play()
     } catch {
+      if (seq !== this.playSeq) return
       this.state = { ...this.state, playing: false }
       this.emit()
     }
@@ -178,7 +220,54 @@ class PlaybackManager {
     }
   }
 
+    /** Set audio volume (0..1). */
+    setVolume(volume: number): void {
+      const next = Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : this.audio.volume
+      if (next === this.audio.volume) return
+      this.audio.volume = next
+      this.state = { ...this.state, volume: next }
+      this.emit()
+    }
+
+    /** Seek to a playback position in seconds. */
+    seek(time: number): void {
+      if (!Number.isFinite(time)) return
+      const max = Number.isFinite(this.audio.duration) ? this.audio.duration : time
+      this.audio.currentTime = Math.min(Math.max(0, time), max)
+      this.sync()
+    }
+
+    /** Play the next track in the current queue, if any. */
+    next(): void {
+      if (this.queue.length === 0 || this.queueIndex < 0 || this.queueIndex >= this.queue.length - 1) {
+        return
+      }
+      this.queueIndex += 1
+      const next = this.queue[this.queueIndex]
+      if (next !== undefined) void this.play(next)
+    }
+
+    /** Play the previous track, or restart the current one after 3s. */
+    previous(): void {
+      if (this.queue.length === 0 || this.queueIndex <= 0) {
+        if (this.audio.currentTime > 3) {
+          this.audio.currentTime = 0
+          this.sync()
+        }
+        return
+      }
+      if (this.audio.currentTime > 3) {
+        this.audio.currentTime = 0
+        this.sync()
+        return
+      }
+      this.queueIndex -= 1
+      const prev = this.queue[this.queueIndex]
+      if (prev !== undefined) void this.play(prev)
+    }
+
   stop(): void {
+    this.playSeq += 1 // cancel any in-flight play()
     this.audio.pause()
     this.audio.removeAttribute('src')
     this.audio.load()
@@ -186,7 +275,7 @@ class PlaybackManager {
     this.lyrics = []
     this.queue = []
     this.queueIndex = -1
-    this.state = { ...EMPTY }
+    this.state = { ...EMPTY, volume: this.audio.volume }
     this.emit()
   }
 }

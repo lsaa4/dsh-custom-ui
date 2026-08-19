@@ -21,6 +21,7 @@ import type { Translate } from './locales.ts'
 import { GlassPanel } from './GlassPanel.tsx'
 import { LyricsLine } from './LyricsLine.tsx'
 import { initLyricPos } from './lyrics.ts'
+import { mountMusicControls } from './musicControls.ts'
 
 const NS = 'dsh-glass-ui'
 
@@ -117,18 +118,28 @@ export function apply(ctx: GlassClientContext): void {
 
   // 2) engine: loads the saved config (or defaults) and applies it
   ctx.effect(() => {
+    let disposed = false
     void loadConfig()
       .then((config) => {
+        if (disposed) return // fiber torn down while the fetch was in flight
         initLyricPos(config.lyricPos)
         engine.apply(config)
       })
-      .catch(() => engine.apply({ ...DEFAULT_CONFIG } as GlassConfig))
-    return () => engine.dispose()
+      .catch(() => {
+        if (!disposed) engine.apply({ ...DEFAULT_CONFIG } as GlassConfig)
+      })
+    return () => {
+      disposed = true
+      engine.dispose()
+    }
   }, 'dsh-glass-ui: glass engine')
 
   // 3) dictionaries + settings section
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-glass-ui: dictionaries')
   const t = ctx.locale.bind(NS)
+
+  // 3.5) compact music controls beside the settings button
+  ctx.effect(() => mountMusicControls(t), 'dsh-glass-ui: music controls')
 
   // 4) lyric line in the composer dock, level with the stats row
   ctx.slots.inject('conversation.composer.dock', () => ctx.slots.register({
