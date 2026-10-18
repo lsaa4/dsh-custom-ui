@@ -21,19 +21,13 @@
 
 ## 安装
 
-### 从 GitHub 安装
+插件只从本仓库分发，不经过 npm：
 
 ```sh
 dsh plugin --profile web add github:lsaa4/dsh-custom-ui
 ```
 
-重启 `dsh web`，打开 **设置 → 自定义UI设计** 即可开始调节。
-
-### 从 npm 安装
-
-```sh
-dsh plugin --profile web add dsh-glass-ui
-```
+仓库里已提交构建产物（`lib/` 与 `client/`），安装后无需自行构建。重启 `dsh web`，打开 **设置 → 自定义UI设计** 即可开始调节。
 
 ### 卸载
 
