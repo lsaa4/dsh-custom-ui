@@ -1,7 +1,7 @@
 window.__ModuleLoader__.load({ id: "dsh-glass-ui", factory: (require) => {
 var module = { exports: {} };
 var exports = module.exports;
-(()=>{const s=document.createElement('style');s.setAttribute('data-plugin',"dsh-glass-ui");s.textContent=":root {\n  --glass-opacity: .72;\n  --glass-blur: 18px;\n  --glass-font: \"\";\n  --glass-font-url: \"\";\n  --glass-bg-type: none;\n  --glass-bg-image: none;\n  --glass-bg-video: none;\n  --glass-bg-mask: 0;\n  --glass-bg-fit: cover;\n  --glass-anim-level: soft;\n  --glass-surface-light: #ffffffb8;\n  --glass-surface-dark: #101018b8;\n}\n\nbody.dsh-glass-on, body.dsh-glass-on button, body.dsh-glass-on input, body.dsh-glass-on select, body.dsh-glass-on textarea {\n  font-family: var(--glass-font);\n}\n\n#dsh-glass-bg {\n  z-index: -1;\n  pointer-events: none;\n  opacity: 0;\n  background: radial-gradient(1200px 800px at 82% -10%, #638cff38, #0000 60%), radial-gradient(1000px 700px at 8% 112%, #00d2b429, #0000 55%), linear-gradient(165deg, #4176e614, #0000 45%);\n  transition: opacity .7s, transform .7s, filter .7s;\n  position: fixed;\n  inset: 0;\n  overflow: hidden;\n}\n\nbody.dsh-glass-ready #dsh-glass-bg {\n  opacity: 1;\n}\n\n#dsh-glass-bg img, #dsh-glass-bg video {\n  object-fit: var(--glass-bg-fit, cover);\n  width: 100%;\n  height: 100%;\n  filter: blur(calc(var(--glass-blur) * .55)) saturate(1.12);\n  transition: filter .7s, opacity .7s;\n  position: absolute;\n  inset: 0;\n  transform: scale(1.06);\n}\n\nbody[data-glass-fit=\"contain\"] #dsh-glass-bg img, body[data-glass-fit=\"contain\"] #dsh-glass-bg video {\n  object-fit: contain;\n}\n\nbody[data-glass-fit=\"original\"] #dsh-glass-bg img, body[data-glass-fit=\"original\"] #dsh-glass-bg video {\n  object-fit: none;\n  width: auto;\n  max-width: none;\n  height: auto;\n  max-height: none;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%) scale(1.06);\n}\n\n#dsh-glass-bg:after {\n  content: \"\";\n  background: rgba(255, 255, 255, var(--glass-bg-mask));\n  transition: opacity .7s;\n  position: absolute;\n  inset: 0;\n}\n\nbody[data-ds-dark-theme] #dsh-glass-bg:after {\n  background: rgba(0, 0, 0, var(--glass-bg-mask));\n}\n\nbody.dsh-glass-on {\n  --dsh-scrollbar-thumb: #7f7f7f61;\n  --dsh-scrollbar-thumb-hover: #7f7f7f8c;\n}\n\n@keyframes dsh-glass-fade {\n  from {\n    opacity: 0;\n    transform: translateY(6px);\n  }\n\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n  animation: .45s cubic-bezier(.2, .6, .3, 1) both dsh-glass-fade;\n}\n\nbody.dsh-glass-anim-soft button, body.dsh-glass-anim-soft [role=\"button\"], body.dsh-glass-anim-strong button, body.dsh-glass-anim-strong [role=\"button\"] {\n  transition: transform .18s, background-color .18s, opacity .18s, border-color .18s, box-shadow .18s;\n}\n\nbody.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: .9s;\n}\n\n@keyframes dsh-glass-pop {\n  0% {\n    opacity: .6;\n    transform: translateY(2px) scale(.985);\n  }\n\n  100% {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-strong #root > * {\n  animation: .5s cubic-bezier(.2, .6, .3, 1) both dsh-glass-pop;\n}\n\nbody.dsh-glass-anim-strong button:hover, body.dsh-glass-anim-strong [role=\"button\"]:hover {\n  transform: translateY(-1px) scale(1.02);\n  box-shadow: 0 4px 18px #638cff38;\n}\n\nbody.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: 1.4s;\n}\n\nbody.dsh-glass-anim-none #root > * {\n  animation: none !important;\n}\n\nbody.dsh-glass-anim-none #dsh-glass-bg, body.dsh-glass-anim-none #dsh-glass-bg img, body.dsh-glass-anim-none #dsh-glass-bg video {\n  transition: none !important;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  body.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n    animation: none;\n  }\n\n  body.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n    transition: none;\n  }\n}\n\n.dsh-glass-music-controls {\n  background: #7f7f7f14;\n  border: 1px solid #7f7f7f33;\n  border-radius: 12px;\n  flex-direction: column;\n  gap: 6px;\n  width: 180px;\n  margin: 0;\n  padding: 8px;\n  display: flex;\n  box-shadow: 0 4px 16px #00000014;\n}\n\n.dsh-glass-music-cover {\n  aspect-ratio: 1;\n  background: #7f7f7f1f;\n  border-radius: 8px;\n  width: 100%;\n  position: relative;\n  overflow: hidden;\n}\n\n.dsh-glass-music-cover img {\n  object-fit: cover;\n  width: 100%;\n  height: 100%;\n  display: none;\n}\n\n.dsh-glass-music-cover-placeholder {\n  color: #7f7f7fb3;\n  justify-content: center;\n  align-items: center;\n  width: 100%;\n  height: 100%;\n  font-size: 32px;\n  display: flex;\n}\n\n.dsh-glass-music-progress {\n  flex-direction: column;\n  gap: 2px;\n  display: flex;\n}\n\n.dsh-glass-music-progress input[type=\"range\"] {\n  width: 100%;\n  height: 4px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.dsh-glass-music-times {\n  opacity: .7;\n  justify-content: space-between;\n  font-size: 11px;\n  display: flex;\n}\n\n.dsh-glass-music-buttons {\n  flex-wrap: wrap;\n  justify-content: center;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.dsh-glass-music-controls button {\n  width: 24px;\n  height: 24px;\n  color: inherit;\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 6px;\n  justify-content: center;\n  align-items: center;\n  padding: 0;\n  font-size: 12px;\n  line-height: 1;\n  display: inline-flex;\n}\n\n.dsh-glass-music-controls button:hover:not(:disabled) {\n  background: #4176e61f;\n}\n\n.dsh-glass-music-controls button:disabled {\n  opacity: .35;\n  cursor: default;\n}\n\n.dsh-glass-volume {\n  align-items: center;\n  gap: 3px;\n  font-size: 11px;\n  display: inline-flex;\n}\n\n.dsh-glass-volume input[type=\"range\"] {\n  width: 48px;\n  height: 3px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.dsh-glass-music-controls--fixed {\n  z-index: 1000;\n  position: fixed;\n}\n.d09JSa_panel {\n  flex-direction: column;\n  gap: 16px;\n  max-width: 640px;\n  padding: 4px 0 16px;\n  display: flex;\n}\n\n.d09JSa_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.d09JSa_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.d09JSa_field {\n  flex-direction: column;\n  gap: 4px;\n  display: flex;\n}\n\n.d09JSa_fieldHead {\n  justify-content: space-between;\n  align-items: center;\n  font-size: 13px;\n  display: flex;\n}\n\n.d09JSa_value {\n  font-variant-numeric: tabular-nums;\n  opacity: .75;\n}\n\n.d09JSa_range {\n  width: 100%;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.d09JSa_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.d09JSa_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.d09JSa_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.d09JSa_grow {\n  flex: 220px;\n}\n\n.d09JSa_fileName {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.d09JSa_toggleRow {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  font-size: 13px;\n  display: flex;\n}\n\n.d09JSa_toggleRow input {\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.d09JSa_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.d09JSa_interval {\n  width: 90px;\n}\n\n.d09JSa_imageList {\n  flex-direction: column;\n  gap: 6px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.d09JSa_imageRow {\n  justify-content: space-between;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.d09JSa_imageName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  background: none;\n  border: 1px solid #0000;\n  border-radius: 6px;\n  flex: auto;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 12px;\n  display: inline-flex;\n  overflow: hidden;\n}\n\n.d09JSa_imageName em {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  background: #4176e62e;\n  border-radius: 8px;\n  padding: 1px 6px;\n  font-size: 10px;\n  font-style: normal;\n}\n\n.d09JSa_imageName[data-active] {\n  border-color: #4176e666;\n}\n\n.d09JSa_cssArea {\n  width: 100%;\n  min-height: 110px;\n  color: inherit;\n  resize: vertical;\n  box-sizing: border-box;\n  background: #0000000a;\n  border: 1px solid #7f7f7f40;\n  border-radius: 8px;\n  padding: 8px 10px;\n  font-family: SF Mono, JetBrains Mono, Consolas, monospace;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.d09JSa_saveState {\n  opacity: .7;\n  font-size: 12px;\n}\n.-pu28G_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.-pu28G_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.-pu28G_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_field {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.-pu28G_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.-pu28G_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.-pu28G_loginBox {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.-pu28G_qrBox {\n  flex-direction: column;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.-pu28G_qrBox canvas {\n  border: 1px solid #7f7f7f33;\n  border-radius: 8px;\n}\n\n.-pu28G_qrState {\n  opacity: .75;\n  margin: 0;\n  font-size: 12px;\n}\n\n.-pu28G_account {\n  font-size: 13px;\n  font-weight: 500;\n}\n\n.-pu28G_select {\n  color: inherit;\n  background: #7f7f7f0f;\n  border: 1px solid #7f7f7f4d;\n  border-radius: 8px;\n  max-width: 320px;\n  padding: 5px 10px;\n  font-size: 13px;\n}\n\n.-pu28G_songList {\n  flex-direction: column;\n  gap: 2px;\n  max-height: 260px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n  overflow-y: auto;\n}\n\n.-pu28G_songRow {\n  align-items: center;\n  display: flex;\n}\n\n.-pu28G_songName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 6px;\n  flex-direction: column;\n  flex: auto;\n  gap: 1px;\n  padding: 5px 8px;\n  display: flex;\n}\n\n.-pu28G_songName:hover {\n  background: #4176e61a;\n}\n\n.-pu28G_songActive, .-pu28G_songActive:hover {\n  background: #4176e62e;\n}\n\n.-pu28G_songTitle {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  overflow: hidden;\n}\n\n.-pu28G_songMeta {\n  opacity: .6;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 11px;\n  overflow: hidden;\n}\n\n.-pu28G_nowPlaying {\n  opacity: .75;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.-pu28G_volume {\n  opacity: .85;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  display: inline-flex;\n}\n\n.-pu28G_volume input[type=\"range\"] {\n  width: 80px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n.kclPIa_root {\n  min-width: 0;\n  max-width: 46vw;\n  color: var(--dsw-alias-label-tertiary, #7f7f7fd9);\n  white-space: nowrap;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  line-height: 20px;\n  display: inline-flex;\n}\n\n.kclPIa_root[data-pos=\"end\"] {\n  margin-left: auto;\n}\n\n.kclPIa_icon {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  flex: none;\n}\n\n.kclPIa_title {\n  text-overflow: ellipsis;\n  flex: none;\n  max-width: 30vw;\n  font-weight: 500;\n  overflow: hidden;\n}\n\n.kclPIa_sep {\n  opacity: .6;\n  flex: none;\n}\n\n.kclPIa_line {\n  text-overflow: ellipsis;\n  flex: auto;\n  min-width: 0;\n  overflow: hidden;\n}\n";(document.head||document.documentElement).appendChild(s)})();Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+(()=>{const s=document.createElement('style');s.setAttribute('data-plugin',"dsh-glass-ui");s.textContent=":root {\n  --glass-opacity: .72;\n  --glass-blur: 18px;\n  --glass-font: \"\";\n  --glass-font-url: \"\";\n  --glass-bg-type: none;\n  --glass-bg-image: none;\n  --glass-bg-video: none;\n  --glass-bg-mask: 0;\n  --glass-bg-fit: cover;\n  --glass-anim-level: soft;\n  --glass-surface-light: #ffffffb8;\n  --glass-surface-dark: #101018b8;\n  --glass-hover-light: #ffffffd6;\n  --glass-hover-dark: #101018d6;\n  --glass-solid-light: #ffffffe0;\n  --glass-solid-dark: #101018e0;\n  --glass-panel-light: #ffffffe0;\n  --glass-panel-dark: #101018e0;\n}\n\nhtml[data-windows-titlebar] body > span[style*=\"var(--dsw-specific-sidebar-fill)\"] {\n  background-color: #0000 !important;\n}\n\nbody.dsh-glass-on, body.dsh-glass-on button, body.dsh-glass-on input, body.dsh-glass-on select, body.dsh-glass-on textarea {\n  font-family: var(--glass-font);\n}\n\nbody[data-glass-weight], body[data-glass-weight] :is(p, span, div, li, dd, dt, label, blockquote, figcaption, td, th, a, button, input, select, textarea, [role=\"button\"]) {\n  font-weight: var(--glass-font-weight, 400);\n}\n\n#dsh-glass-bg {\n  z-index: -1;\n  pointer-events: none;\n  opacity: 0;\n  background: radial-gradient(1200px 800px at 82% -10%, #638cff38, #0000 60%), radial-gradient(1000px 700px at 8% 112%, #00d2b429, #0000 55%), linear-gradient(165deg, #4176e614, #0000 45%);\n  transition: opacity .7s, transform .7s, filter .7s;\n  position: fixed;\n  inset: 0;\n  overflow: hidden;\n}\n\nbody.dsh-glass-ready #dsh-glass-bg {\n  opacity: 1;\n}\n\n#dsh-glass-bg img, #dsh-glass-bg video {\n  object-fit: var(--glass-bg-fit, cover);\n  width: 100%;\n  height: 100%;\n  filter: blur(calc(var(--glass-blur) * .55)) saturate(1.12);\n  transition: filter .7s, opacity .7s;\n  position: absolute;\n  inset: 0;\n  transform: scale(1.06);\n}\n\nbody[data-glass-fit=\"contain\"] #dsh-glass-bg img, body[data-glass-fit=\"contain\"] #dsh-glass-bg video {\n  object-fit: contain;\n}\n\nbody[data-glass-fit=\"original\"] #dsh-glass-bg img, body[data-glass-fit=\"original\"] #dsh-glass-bg video {\n  object-fit: none;\n  width: auto;\n  max-width: none;\n  height: auto;\n  max-height: none;\n  top: 50%;\n  left: 50%;\n  transform: translate(-50%, -50%) scale(1.06);\n}\n\n#dsh-glass-bg:after {\n  content: \"\";\n  background: rgba(255, 255, 255, var(--glass-bg-mask));\n  transition: opacity .7s;\n  position: absolute;\n  inset: 0;\n}\n\nbody[data-ds-dark-theme] #dsh-glass-bg:after {\n  background: rgba(0, 0, 0, var(--glass-bg-mask));\n}\n\nbody.dsh-glass-on {\n  --dsh-scrollbar-thumb: #7f7f7f61;\n  --dsh-scrollbar-thumb-hover: #7f7f7f8c;\n}\n\n@keyframes dsh-glass-fade {\n  from {\n    opacity: 0;\n    transform: translateY(6px);\n  }\n\n  to {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n  animation: .45s cubic-bezier(.2, .6, .3, 1) both dsh-glass-fade;\n}\n\nbody.dsh-glass-anim-soft button, body.dsh-glass-anim-soft [role=\"button\"], body.dsh-glass-anim-strong button, body.dsh-glass-anim-strong [role=\"button\"] {\n  transition: transform .18s, background-color .18s, opacity .18s, border-color .18s, box-shadow .18s;\n}\n\nbody.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: .9s;\n}\n\n@keyframes dsh-glass-pop {\n  0% {\n    opacity: .6;\n    transform: translateY(2px) scale(.985);\n  }\n\n  100% {\n    opacity: 1;\n    transform: none;\n  }\n}\n\nbody.dsh-glass-anim-strong #root > * {\n  animation: .5s cubic-bezier(.2, .6, .3, 1) both dsh-glass-pop;\n}\n\nbody.dsh-glass-anim-strong button:hover, body.dsh-glass-anim-strong [role=\"button\"]:hover {\n  transform: translateY(-1px) scale(1.02);\n  box-shadow: 0 4px 18px #638cff38;\n}\n\nbody.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n  transition-duration: 1.4s;\n}\n\nbody.dsh-glass-anim-none #root > * {\n  animation: none !important;\n}\n\nbody.dsh-glass-anim-none #dsh-glass-bg, body.dsh-glass-anim-none #dsh-glass-bg img, body.dsh-glass-anim-none #dsh-glass-bg video {\n  transition: none !important;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  body.dsh-glass-anim-soft #root > *, body.dsh-glass-anim-strong #root > * {\n    animation: none;\n  }\n\n  body.dsh-glass-anim-soft #dsh-glass-bg, body.dsh-glass-anim-soft #dsh-glass-bg img, body.dsh-glass-anim-soft #dsh-glass-bg video, body.dsh-glass-anim-strong #dsh-glass-bg, body.dsh-glass-anim-strong #dsh-glass-bg img, body.dsh-glass-anim-strong #dsh-glass-bg video {\n    transition: none;\n  }\n}\n\nbody.dsh-glass-on .dsh-glass-dock {\n  background: var(--glass-solid-light);\n  border-radius: var(--dsw-radius-md, 10px);\n  padding: 2px 8px;\n  box-shadow: 0 2px 10px #0000000d;\n}\n\nbody[data-ds-dark-theme].dsh-glass-on .dsh-glass-dock {\n  background: var(--glass-solid-dark);\n  box-shadow: 0 2px 12px #00000047;\n}\n\n.dsh-glass-music-controls {\n  background: var(--glass-hover-light);\n  vertical-align: middle;\n  border: .5px solid #7f7f7f2e;\n  border-radius: 999px;\n  flex-direction: row;\n  align-items: center;\n  gap: 8px;\n  max-width: 40vw;\n  margin: 0;\n  padding: 2px 10px 2px 4px;\n  display: inline-flex;\n  position: relative;\n  box-shadow: 0 1px 6px #0000000d;\n}\n\nbody[data-ds-dark-theme] .dsh-glass-music-controls {\n  background: var(--glass-hover-dark);\n  box-shadow: 0 1px 6px #00000047;\n}\n\n.dsh-glass-music-cover {\n  aspect-ratio: 1;\n  background: #7f7f7f1f;\n  border-radius: 50%;\n  flex: none;\n  width: 22px;\n  height: 22px;\n  position: relative;\n  overflow: hidden;\n}\n\n.dsh-glass-music-cover img {\n  object-fit: cover;\n  width: 100%;\n  height: 100%;\n  display: none;\n}\n\n.dsh-glass-music-cover-placeholder {\n  color: #7f7f7fb3;\n  justify-content: center;\n  align-items: center;\n  width: 100%;\n  height: 100%;\n  font-size: 13px;\n  display: flex;\n}\n\n.dsh-glass-music-title {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  max-width: 12em;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.dsh-glass-music-progress {\n  flex-direction: column;\n  flex: none;\n  gap: 2px;\n  width: 72px;\n  display: flex;\n}\n\n.dsh-glass-music-progress input[type=\"range\"] {\n  width: 100%;\n  height: 3px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.dsh-glass-music-times {\n  display: none;\n}\n\n.dsh-glass-music-buttons {\n  flex-wrap: nowrap;\n  justify-content: center;\n  align-items: center;\n  gap: 2px;\n  display: flex;\n}\n\n.dsh-glass-music-controls button {\n  width: 24px;\n  height: 24px;\n  color: inherit;\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 6px;\n  justify-content: center;\n  align-items: center;\n  padding: 0;\n  font-size: 12px;\n  line-height: 1;\n  display: inline-flex;\n}\n\n.dsh-glass-music-controls button:hover:not(:disabled) {\n  background: #4176e61f;\n}\n\n.dsh-glass-music-controls button:disabled {\n  opacity: .35;\n  cursor: default;\n}\n\n.dsh-glass-volume {\n  background: var(--glass-solid-light);\n  white-space: nowrap;\n  border: .5px solid #7f7f7f2e;\n  border-radius: 999px;\n  align-items: center;\n  gap: 4px;\n  padding: 4px 10px;\n  font-size: 11px;\n  display: none;\n  position: absolute;\n  bottom: calc(100% + 6px);\n  right: 0;\n  box-shadow: 0 2px 10px #0000001f;\n}\n\nbody[data-ds-dark-theme] .dsh-glass-volume {\n  background: var(--glass-solid-dark);\n  box-shadow: 0 2px 10px #00000052;\n}\n\n.dsh-glass-music-controls:hover .dsh-glass-volume, .dsh-glass-music-controls:focus-within .dsh-glass-volume {\n  display: inline-flex;\n}\n\n.dsh-glass-volume input[type=\"range\"] {\n  width: 56px;\n  height: 3px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n.Mc1Xha_panel {\n  flex-direction: column;\n  gap: 16px;\n  max-width: 640px;\n  padding: 4px 0 16px;\n  display: flex;\n}\n\n.Mc1Xha_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.Mc1Xha_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.Mc1Xha_field {\n  flex-direction: column;\n  gap: 4px;\n  display: flex;\n}\n\n.Mc1Xha_fieldHead {\n  justify-content: space-between;\n  align-items: center;\n  font-size: 13px;\n  display: flex;\n}\n\n.Mc1Xha_value {\n  font-variant-numeric: tabular-nums;\n  opacity: .75;\n}\n\n.Mc1Xha_range {\n  width: 100%;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.Mc1Xha_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.Mc1Xha_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.Mc1Xha_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.Mc1Xha_grow {\n  flex: 220px;\n}\n\n.Mc1Xha_fileName {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.Mc1Xha_toggleRow {\n  cursor: pointer;\n  align-items: center;\n  gap: 8px;\n  font-size: 13px;\n  display: flex;\n}\n\n.Mc1Xha_toggleRow input {\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.Mc1Xha_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.Mc1Xha_interval {\n  width: 90px;\n}\n\n.Mc1Xha_imageList {\n  flex-direction: column;\n  gap: 6px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n}\n\n.Mc1Xha_imageRow {\n  justify-content: space-between;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.Mc1Xha_imageName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  white-space: nowrap;\n  text-overflow: ellipsis;\n  background: none;\n  border: 1px solid #0000;\n  border-radius: 6px;\n  flex: auto;\n  align-items: center;\n  gap: 8px;\n  padding: 4px 8px;\n  font-size: 12px;\n  display: inline-flex;\n  overflow: hidden;\n}\n\n.Mc1Xha_imageName em {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  background: #4176e62e;\n  border-radius: 8px;\n  padding: 1px 6px;\n  font-size: 10px;\n  font-style: normal;\n}\n\n.Mc1Xha_imageName[data-active] {\n  border-color: #4176e666;\n}\n\n.Mc1Xha_cssArea {\n  width: 100%;\n  min-height: 110px;\n  color: inherit;\n  resize: vertical;\n  box-sizing: border-box;\n  background: #0000000a;\n  border: 1px solid #7f7f7f40;\n  border-radius: 8px;\n  padding: 8px 10px;\n  font-family: SF Mono, JetBrains Mono, Consolas, monospace;\n  font-size: 12px;\n  line-height: 1.5;\n}\n\n.Mc1Xha_saveState {\n  opacity: .7;\n  font-size: 12px;\n}\n.mlJxOq_card {\n  background: #7f7f7f0d;\n  border: 1px solid #7f7f7f2e;\n  border-radius: 10px;\n  flex-direction: column;\n  gap: 10px;\n  padding: 14px 16px;\n  display: flex;\n}\n\n.mlJxOq_cardTitle {\n  margin: 0;\n  font-size: 14px;\n  font-weight: 600;\n}\n\n.mlJxOq_row {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 8px;\n  display: flex;\n}\n\n.mlJxOq_field {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.mlJxOq_fieldLabel {\n  opacity: .85;\n  font-size: 13px;\n}\n\n.mlJxOq_pills {\n  flex-wrap: wrap;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.mlJxOq_hint {\n  opacity: .6;\n  margin: 0;\n  font-size: 12px;\n}\n\n.mlJxOq_loginBox {\n  flex-direction: column;\n  gap: 8px;\n  display: flex;\n}\n\n.mlJxOq_qrBox {\n  flex-direction: column;\n  align-items: center;\n  gap: 6px;\n  display: flex;\n}\n\n.mlJxOq_qrBox canvas {\n  border: 1px solid #7f7f7f33;\n  border-radius: 8px;\n}\n\n.mlJxOq_qrState {\n  opacity: .75;\n  margin: 0;\n  font-size: 12px;\n}\n\n.mlJxOq_account {\n  font-size: 13px;\n  font-weight: 500;\n}\n\n.mlJxOq_select {\n  color: inherit;\n  background: #7f7f7f0f;\n  border: 1px solid #7f7f7f4d;\n  border-radius: 8px;\n  max-width: 320px;\n  padding: 5px 10px;\n  font-size: 13px;\n}\n\n.mlJxOq_songList {\n  flex-direction: column;\n  gap: 2px;\n  max-height: 260px;\n  margin: 0;\n  padding: 0;\n  list-style: none;\n  display: flex;\n  overflow-y: auto;\n}\n\n.mlJxOq_songRow {\n  align-items: center;\n  display: flex;\n}\n\n.mlJxOq_songName {\n  min-width: 0;\n  color: inherit;\n  text-align: left;\n  cursor: pointer;\n  background: none;\n  border: none;\n  border-radius: 6px;\n  flex-direction: column;\n  flex: auto;\n  gap: 1px;\n  padding: 5px 8px;\n  display: flex;\n}\n\n.mlJxOq_songName:hover {\n  background: #4176e61a;\n}\n\n.mlJxOq_songActive, .mlJxOq_songActive:hover {\n  background: #4176e62e;\n}\n\n.mlJxOq_songTitle {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 13px;\n  overflow: hidden;\n}\n\n.mlJxOq_songMeta {\n  opacity: .6;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  font-size: 11px;\n  overflow: hidden;\n}\n\n.mlJxOq_nowPlaying {\n  opacity: .75;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  font-size: 12px;\n  overflow: hidden;\n}\n\n.mlJxOq_volume {\n  opacity: .85;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  display: inline-flex;\n}\n\n.mlJxOq_volume input[type=\"range\"] {\n  width: 80px;\n  accent-color: var(--dsw-alias-brand-primary, #4176e6);\n}\n\n.mlJxOq_diagBox {\n  border: .5px solid var(--dsw-alias-border-l1);\n  background: var(--dsw-alias-markdown-code-block, #7f7f7f14);\n  max-height: 220px;\n  color: var(--dsw-alias-label-secondary);\n  font-family: var(--dsh-mono-font-family, ui-monospace, Consolas, monospace);\n  white-space: pre-wrap;\n  word-break: break-all;\n  user-select: text;\n  border-radius: 8px;\n  margin: 0;\n  padding: 8px 10px;\n  font-size: 11px;\n  line-height: 1.5;\n  overflow: auto;\n}\n.vK6gIW_root {\n  min-width: 0;\n  max-width: 46vw;\n  color: var(--dsw-alias-label-tertiary, #7f7f7fd9);\n  white-space: nowrap;\n  align-items: center;\n  gap: 6px;\n  font-size: 12px;\n  line-height: 20px;\n  display: inline-flex;\n}\n\n.vK6gIW_root[data-pos=\"end\"] {\n  margin-left: auto;\n}\n\n.vK6gIW_icon {\n  color: var(--dsw-alias-brand-primary, #4176e6);\n  flex: none;\n}\n\n.vK6gIW_title {\n  text-overflow: ellipsis;\n  flex: none;\n  max-width: 30vw;\n  font-weight: 500;\n  overflow: hidden;\n}\n\n.vK6gIW_sep {\n  opacity: .6;\n  flex: none;\n}\n\n.vK6gIW_line {\n  text-overflow: ellipsis;\n  flex: auto;\n  min-width: 0;\n  overflow: hidden;\n}\n";(document.head||document.documentElement).appendChild(s)})();Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
 //#region \0rolldown/runtime.js
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -36,6 +36,8 @@ const CUSTOM_CSS_ID = "dsh-glass-custom";
 const CUSTOM_FONT_FAMILY = "GlassCustomFont";
 const SURFACE_LIGHT = "255, 255, 255";
 const SURFACE_DARK = "16, 16, 24";
+/** How much more solid a hover plate is than the resting surface it sits on. */
+const HOVER_DELTA = .12;
 var GlassEngine = class {
 	disposers = [];
 	applied = false;
@@ -76,7 +78,22 @@ var GlassEngine = class {
 		root.style.setProperty("--glass-anim-level", config.animLevel);
 		root.style.setProperty("--glass-surface-light", `rgba(${SURFACE_LIGHT}, ${config.opacity})`);
 		root.style.setProperty("--glass-surface-dark", `rgba(${SURFACE_DARK}, ${config.opacity})`);
+		const hover = Math.min(1, config.opacity + HOVER_DELTA);
+		root.style.setProperty("--glass-hover-light", `rgba(${SURFACE_LIGHT}, ${hover})`);
+		root.style.setProperty("--glass-hover-dark", `rgba(${SURFACE_DARK}, ${hover})`);
+		const content = Math.min(1, Math.max(0, config.contentOpacity));
+		root.style.setProperty("--glass-solid-light", `rgba(${SURFACE_LIGHT}, ${content})`);
+		root.style.setProperty("--glass-solid-dark", `rgba(${SURFACE_DARK}, ${content})`);
+		root.style.setProperty("--glass-panel-light", `rgba(${SURFACE_LIGHT}, ${content})`);
+		root.style.setProperty("--glass-panel-dark", `rgba(${SURFACE_DARK}, ${content})`);
 		const body = document.body;
+		if (config.fontWeight > 0) {
+			root.style.setProperty("--glass-font-weight", String(config.fontWeight));
+			body.dataset.glassWeight = String(config.fontWeight);
+		} else {
+			root.style.removeProperty("--glass-font-weight");
+			delete body.dataset.glassWeight;
+		}
 		body.classList.add("dsh-glass-on");
 		body.dataset.glassFit = config.bgFit;
 		body.classList.toggle("dsh-glass-anim-soft", config.animLevel === "soft");
@@ -300,11 +317,19 @@ var GlassEngine = class {
 			"--glass-bg-fit",
 			"--glass-anim-level",
 			"--glass-surface-light",
-			"--glass-surface-dark"
+			"--glass-surface-dark",
+			"--glass-hover-light",
+			"--glass-hover-dark",
+			"--glass-solid-light",
+			"--glass-solid-dark",
+			"--glass-panel-light",
+			"--glass-panel-dark",
+			"--glass-font-weight"
 		]) root.style.removeProperty(name);
 		const body = document.body;
 		body.classList.remove("dsh-glass-on", "dsh-glass-anim-soft", "dsh-glass-anim-strong", "dsh-glass-anim-none", "dsh-glass-ready");
 		delete body.dataset.glassFit;
+		delete body.dataset.glassWeight;
 		this.imgA = null;
 		this.imgB = null;
 		this.currentVideo = null;
@@ -316,6 +341,8 @@ var GlassEngine = class {
 const DEFAULT_CONFIG = {
 	opacity: .72,
 	blur: 18,
+	contentOpacity: .88,
+	fontWeight: 0,
 	font: "",
 	fontUrl: "",
 	bgType: "none",
@@ -331,7 +358,8 @@ const DEFAULT_CONFIG = {
 	lyricPos: "inline",
 	mediaDisplay: true,
 	neteaseProxy: "",
-	neteaseApiBase: ""
+	neteaseApiBase: "",
+	neteaseRealIp: "118.88.88.88"
 };
 /** Migrate a raw (possibly legacy) config into the current shape. */
 function normalizeConfig(raw) {
@@ -339,6 +367,17 @@ function normalizeConfig(raw) {
 		...DEFAULT_CONFIG,
 		...raw
 	};
+	const content = typeof merged.contentOpacity === "number" && Number.isFinite(merged.contentOpacity) ? merged.contentOpacity : DEFAULT_CONFIG.contentOpacity;
+	merged.contentOpacity = Math.min(1, Math.max(.5, content));
+	const weight = typeof merged.fontWeight === "number" && Number.isFinite(merged.fontWeight) ? merged.fontWeight : DEFAULT_CONFIG.fontWeight;
+	merged.fontWeight = [
+		0,
+		300,
+		400,
+		500,
+		600,
+		700
+	].includes(weight) ? weight : 0;
 	if (raw.animations === false && merged.animLevel === "soft") merged.animLevel = "none";
 	if (merged.bgImage !== "" && !merged.bgImages.includes(merged.bgImage)) merged.bgImages = [merged.bgImage, ...merged.bgImages];
 	merged.bgImages = merged.bgImages.filter((u) => typeof u === "string" && u !== "");
@@ -388,6 +427,15 @@ const zh = {
 	opacityHint: "数值越大玻璃越实、越不透明",
 	blurLabel: "模糊强度",
 	blurHint: "背景的模糊半径（px）",
+	readTitle: "可读性",
+	contentOpacityLabel: "内容区不透明度",
+	contentOpacityHint: "对话框、输入框、代码块、消息气泡的实心度；越高字越清楚，越低越透",
+	fontWeightLabel: "文字粗细",
+	fontWeightHint: "整体字重；界面发虚时调粗一档最有效",
+	fontWeightDefault: "默认",
+	fontWeightRegular: "常规",
+	fontWeightMedium: "中等",
+	fontWeightSemibold: "加粗",
 	fontTitle: "字体",
 	fontPresets: "预设字体",
 	fontCustom: "自定义字体族",
@@ -459,10 +507,22 @@ const zh = {
 	lyricQrExpired: "二维码已过期，请重新生成",
 	lyricQrCancel: "取消",
 	lyricQrFail: "获取二维码失败，请重试",
-	lyricCookiePh: "或粘贴网页版 Cookie（可多行，自动拼接）",
+	lyricCookiePh: "粘贴网页版 Cookie（含 MUSIC_U，可多行/表格粘贴）",
 	lyricCookieLogin: "Cookie 登录",
 	lyricCookieRejected: "Cookie 无效或已过期",
+	lyricCookieNoSession: "里面没有 MUSIC_U，这不是登录凭据。MUSIC_U 是 HttpOnly，document.cookie 取不到它——请在开发者工具 Application → Cookies → music.163.com 复制，或从任意请求的请求头里复制整条 Cookie",
+	lyricCookieUnparsed: "没能从这段内容里认出 cookie。请连名字一起复制（例如 MUSIC_U=xxxx）；在 Cookies 表格里直接 Ctrl+A 全选复制最省事",
 	lyricCookieFail: "Cookie 登录失败：{error}",
+	lyricRealIpLabel: "真实 IP 头（绕过风控）",
+	lyricRealIpHint: "留空 = 不发送该请求头；风控主要看来源 IP",
+	lyricDiagButton: "风控诊断",
+	lyricDiagRunning: "诊断中…",
+	lyricDiagTitle: "诊断结果",
+	lyricDiagFail: "诊断失败：{error}",
+	lyricRiskHint: "被网易云风控拦截（code {code}）：换网络或开代理、设置真实 IP，或改用 Cookie 登录",
+	lyricQrLastCode: "最近状态：{code}",
+	lyricCheckLogin: "我已扫码，检查登录",
+	lyricCheckLoginFail: "仍未登录：请重新扫码，或粘贴 Cookie",
 	lyricLoginOk: "登录成功：{name}",
 	lyricLoggedIn: "已登录：{name}",
 	lyricLogout: "退出登录",
@@ -493,6 +553,15 @@ const en = {
 	opacityHint: "Higher = more solid, less transparent",
 	blurLabel: "Blur",
 	blurHint: "Background blur radius (px)",
+	readTitle: "Readability",
+	contentOpacityLabel: "Content surface opacity",
+	contentOpacityHint: "Solidity of dialogs, inputs, code blocks and the message bubble — higher is clearer, lower is glassier",
+	fontWeightLabel: "Text weight",
+	fontWeightHint: "UI-wide font weight; one step heavier is the quickest fix for faint text",
+	fontWeightDefault: "Default",
+	fontWeightRegular: "Regular",
+	fontWeightMedium: "Medium",
+	fontWeightSemibold: "Semibold",
 	fontTitle: "Font",
 	fontPresets: "Presets",
 	fontCustom: "Custom font family",
@@ -564,10 +633,22 @@ const en = {
 	lyricQrExpired: "QR code expired, please regenerate",
 	lyricQrCancel: "Cancel",
 	lyricQrFail: "Failed to get the QR code, please retry",
-	lyricCookiePh: "or paste the web cookie (multi-line OK)",
+	lyricCookiePh: "Paste the web cookie (must contain MUSIC_U; table/multi-line OK)",
 	lyricCookieLogin: "Cookie login",
 	lyricCookieRejected: "Cookie invalid or expired",
+	lyricCookieNoSession: "No MUSIC_U in there — that is not a login. MUSIC_U is HttpOnly, so document.cookie cannot see it: copy it from DevTools → Application → Cookies → music.163.com, or copy the full Cookie header from any request",
+	lyricCookieUnparsed: "No cookie recognised in that paste. Copy the name together with the value (e.g. MUSIC_U=xxxx); selecting the whole Cookies table with Ctrl+A is easiest",
 	lyricCookieFail: "Cookie login failed: {error}",
+	lyricRealIpLabel: "Real-IP header (bypass)",
+	lyricRealIpHint: "Empty = send no header; risk control looks at the source IP",
+	lyricDiagButton: "Diagnose",
+	lyricDiagRunning: "Diagnosing…",
+	lyricDiagTitle: "Diagnosis",
+	lyricDiagFail: "Diagnosis failed: {error}",
+	lyricRiskHint: "Blocked by NetEase risk control (code {code}): change network or use a proxy, set a real IP, or log in with a cookie",
+	lyricQrLastCode: "Last status: {code}",
+	lyricCheckLogin: "I scanned — check login",
+	lyricCheckLoginFail: "Still signed out — scan again, or paste a cookie",
 	lyricLoginOk: "Signed in: {name}",
 	lyricLoggedIn: "Signed in: {name}",
 	lyricLogout: "Sign out",
@@ -615,26 +696,26 @@ const FONT_PRESETS = [
 //#endregion
 //#region src/client/GlassPanel.module.css
 var GlassPanel_module_default = {
-	"card": "d09JSa_card",
-	"cardTitle": "d09JSa_cardTitle",
-	"cssArea": "d09JSa_cssArea",
-	"field": "d09JSa_field",
-	"fieldHead": "d09JSa_fieldHead",
-	"fieldLabel": "d09JSa_fieldLabel",
-	"fileName": "d09JSa_fileName",
-	"grow": "d09JSa_grow",
-	"hint": "d09JSa_hint",
-	"imageList": "d09JSa_imageList",
-	"imageName": "d09JSa_imageName",
-	"imageRow": "d09JSa_imageRow",
-	"interval": "d09JSa_interval",
-	"panel": "d09JSa_panel",
-	"pills": "d09JSa_pills",
-	"range": "d09JSa_range",
-	"row": "d09JSa_row",
-	"saveState": "d09JSa_saveState",
-	"toggleRow": "d09JSa_toggleRow",
-	"value": "d09JSa_value"
+	"card": "Mc1Xha_card",
+	"cardTitle": "Mc1Xha_cardTitle",
+	"cssArea": "Mc1Xha_cssArea",
+	"field": "Mc1Xha_field",
+	"fieldHead": "Mc1Xha_fieldHead",
+	"fieldLabel": "Mc1Xha_fieldLabel",
+	"fileName": "Mc1Xha_fileName",
+	"grow": "Mc1Xha_grow",
+	"hint": "Mc1Xha_hint",
+	"imageList": "Mc1Xha_imageList",
+	"imageName": "Mc1Xha_imageName",
+	"imageRow": "Mc1Xha_imageRow",
+	"interval": "Mc1Xha_interval",
+	"panel": "Mc1Xha_panel",
+	"pills": "Mc1Xha_pills",
+	"range": "Mc1Xha_range",
+	"row": "Mc1Xha_row",
+	"saveState": "Mc1Xha_saveState",
+	"toggleRow": "Mc1Xha_toggleRow",
+	"value": "Mc1Xha_value"
 };
 //#endregion
 //#region node_modules/.pnpm/qrcode@1.5.4/node_modules/qrcode/lib/can-promise.js
@@ -3087,16 +3168,43 @@ const COOKIE_NAME_RES = [
 	/^WM_TID/,
 	/^__csrf/
 ].sort((a, b) => b.source.length - a.source.length);
-const STANDARD_COOKIE_RE = /^(?:[^=;\s]+=[^;]*)(?:\s*;\s*[^=;\s]+=[^;]*)*$/;
-function normalizeCookiePaste(raw) {
-	const trimmed = raw.trim();
-	if (trimmed === "") return "";
-	if (STANDARD_COOKIE_RE.test(trimmed)) return trimmed;
-	const lines = trimmed.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.includes("=") && !l.startsWith(";"));
-	if (lines.length > 1 && lines.every((l) => /^[^=;\s]+=[^;]*$/.test(l))) return lines.join("; ");
+const PAIR_RE = /^([A-Za-z0-9_.-]+)=(.*)$/;
+/** The session cookie a login actually needs; everything else is decoration. */
+const SESSION_COOKIE_RE = /(?:^|;\s*)MUSIC_U=/;
+/** True when the pasted session carries a real login (MUSIC_U is HttpOnly). */
+function hasSessionCookie(normalized) {
+	return SESSION_COOKIE_RE.test(normalized);
+}
+/** Keep the last value for a repeated name, in first-seen order. */
+function dedupePairs(pairs) {
+	const seen = /* @__PURE__ */ new Map();
+	for (const pair of pairs) {
+		const m = PAIR_RE.exec(pair);
+		if (m === null) continue;
+		const [, name, value] = m;
+		if (name === void 0 || value === void 0 || value.trim() === "") continue;
+		seen.set(name, `${name}=${value.trim()}`);
+	}
+	return [...seen.values()].join("; ");
+}
+/** DevTools copies its cookie table as tab-separated rows: name, value, domain… */
+function pairsFromTable(text) {
+	const out = [];
+	for (const line of text.split(/\r?\n/)) {
+		if (!line.includes("	")) continue;
+		const [name, value] = line.split("	").map((column) => column.trim());
+		if (name === void 0 || value === void 0 || value === "") continue;
+		if (!/^[A-Za-z0-9_.-]+$/.test(name)) continue;
+		if (name === "Name" && value === "Value") continue;
+		out.push(`${name}=${value}`);
+	}
+	return out;
+}
+/** Pull known cookie names out of text that has no usable separators. */
+function salvagePairs(text) {
 	const unanchored = COOKIE_NAME_RES.map((re) => new RegExp(re.source.replace(/^\^/, "")));
 	const parts = [];
-	let rest = trimmed;
+	let rest = text;
 	while (rest.length > 0) {
 		let name = null;
 		for (const re of COOKIE_NAME_RES) {
@@ -3107,16 +3215,44 @@ function normalizeCookiePaste(raw) {
 			}
 		}
 		if (name === null) break;
-		rest = rest.slice(name.length);
+		rest = rest.slice(name.length).replace(/^[=\s]+/, "");
 		let end = rest.length;
 		for (const re of unanchored) {
 			const idx = rest.search(re);
 			if (idx !== -1 && idx < end) end = idx;
 		}
-		parts.push(`${name}=${rest.slice(0, end)}`);
+		const value = rest.slice(0, end).replace(/[;\s]+$/, "");
+		if (value !== "") parts.push(`${name}=${value}`);
 		rest = rest.slice(end);
 	}
-	return parts.join("; ");
+	return parts;
+}
+/**
+* Turn whatever the user copied into a `name=value; …` session string.
+*
+* `MUSIC_U` is HttpOnly, so `document.cookie` never contains it and the shapes
+* people really paste are: a header/curl fragment, the DevTools cookie table
+* (tab separated), a multi-line list, or an ordinary `a=1; b=2` string. All of
+* them end up here, and a value with a trailing separator silently breaks the
+* session, so each shape is parsed explicitly rather than by one loose regex.
+*/
+function normalizeCookiePaste(raw) {
+	let text = raw.trim();
+	if (text === "") return "";
+	const headerAt = text.lastIndexOf("Cookie:");
+	if (headerAt >= 0) text = text.slice(headerAt + 7);
+	text = text.replace(/^['"]+|['"]+$/g, "").trim();
+	if (text === "") return "";
+	const table = pairsFromTable(text);
+	if (table.length > 0) return dedupePairs(table);
+	const pairs = text.split(/[;\r\n]+/).map((token) => token.trim()).filter((token) => token !== "").map((token) => {
+		const m = PAIR_RE.exec(token);
+		if (m === null) return null;
+		const [, name, value] = m;
+		return name === void 0 || value === void 0 ? null : `${name}=${value.trim()}`;
+	}).filter((pair) => pair !== null);
+	if (pairs.length > 0) return dedupePairs(pairs);
+	return dedupePairs(salvagePairs(text));
 }
 /** Login by pasting a music.163.com session cookie (works when QR is blocked). */
 async function submitCookie(cookie) {
@@ -3126,6 +3262,18 @@ async function submitCookie(cookie) {
 		body: JSON.stringify({ cookie })
 	});
 	if (!res.ok) throw new Error(`cookie login: HTTP ${res.status}`);
+	return await res.json();
+}
+/**
+* Ask the host what the upstream actually replied.
+*
+* Risk control, an expired cookie and an unreachable network all surface as
+* "login failed" in the UI; this returns the upstream's own code and message
+* (plus the headers being sent) so the cause is visible.
+*/
+async function getDiagnostics() {
+	const res = await fetch("/netease/diag", { cache: "no-store" });
+	if (!res.ok) throw new Error(`diagnostics: HTTP ${res.status}`);
 	return await res.json();
 }
 async function requestQrKey() {
@@ -3478,26 +3626,27 @@ function initLyricPos(saved) {
 //#endregion
 //#region src/client/NeteasePanel.module.css
 var NeteasePanel_module_default = {
-	"account": "-pu28G_account",
-	"card": "-pu28G_card",
-	"cardTitle": "-pu28G_cardTitle",
-	"field": "-pu28G_field",
-	"fieldLabel": "-pu28G_fieldLabel",
-	"hint": "-pu28G_hint",
-	"loginBox": "-pu28G_loginBox",
-	"nowPlaying": "-pu28G_nowPlaying",
-	"pills": "-pu28G_pills",
-	"qrBox": "-pu28G_qrBox",
-	"qrState": "-pu28G_qrState",
-	"row": "-pu28G_row",
-	"select": "-pu28G_select",
-	"songActive": "-pu28G_songActive",
-	"songList": "-pu28G_songList",
-	"songMeta": "-pu28G_songMeta",
-	"songName": "-pu28G_songName",
-	"songRow": "-pu28G_songRow",
-	"songTitle": "-pu28G_songTitle",
-	"volume": "-pu28G_volume"
+	"account": "mlJxOq_account",
+	"card": "mlJxOq_card",
+	"cardTitle": "mlJxOq_cardTitle",
+	"diagBox": "mlJxOq_diagBox",
+	"field": "mlJxOq_field",
+	"fieldLabel": "mlJxOq_fieldLabel",
+	"hint": "mlJxOq_hint",
+	"loginBox": "mlJxOq_loginBox",
+	"nowPlaying": "mlJxOq_nowPlaying",
+	"pills": "mlJxOq_pills",
+	"qrBox": "mlJxOq_qrBox",
+	"qrState": "mlJxOq_qrState",
+	"row": "mlJxOq_row",
+	"select": "mlJxOq_select",
+	"songActive": "mlJxOq_songActive",
+	"songList": "mlJxOq_songList",
+	"songMeta": "mlJxOq_songMeta",
+	"songName": "mlJxOq_songName",
+	"songRow": "mlJxOq_songRow",
+	"songTitle": "mlJxOq_songTitle",
+	"volume": "mlJxOq_volume"
 };
 //#endregion
 //#region src/client/NeteasePanel.tsx
@@ -3515,12 +3664,16 @@ const LYRIC_POSITIONS = [
 		labelKey: "lyricPosHidden"
 	}
 ];
+/** Where a pending QR login is remembered across settings-panel unmounts. */
+const QR_STORE = "dsh-glass-ui:netease-qr";
+/** Older than this a key is not worth resuming — the code has expired anyway. */
+const QR_TTL_MS = 18e4;
 function fmtTime(ms) {
 	if (ms === void 0 || !Number.isFinite(ms)) return "";
 	const s = Math.floor(ms / 1e3);
 	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
-function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase }) {
+function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase, neteaseRealIp, onNeteaseRealIp }) {
 	const [account, setAccount] = (0, react.useState)("loading");
 	const [qrKey, setQrKey] = (0, react.useState)(null);
 	const [qrImg, setQrImg] = (0, react.useState)(null);
@@ -3537,6 +3690,10 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 	const [busy, setBusy] = (0, react.useState)(false);
 	const [cookieInput, setCookieInput] = (0, react.useState)("");
 	const [toast, setToast] = (0, react.useState)(null);
+	const [diag, setDiag] = (0, react.useState)(null);
+	const [diagBusy, setDiagBusy] = (0, react.useState)(false);
+	/** Last QR status code the poll saw, so a stalled login is visible. */
+	const [qrLastCode, setQrLastCode] = (0, react.useState)(null);
 	const canvasRef = (0, react.useRef)(null);
 	const pollTimer = (0, react.useRef)(void 0);
 	const mountedRef = (0, react.useRef)(true);
@@ -3577,6 +3734,72 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 		}
 		setPolling(false);
 	}
+	/** Remember the pending key so closing the settings panel does not lose the login. */
+	function rememberQr(key) {
+		try {
+			window.sessionStorage.setItem(QR_STORE, JSON.stringify({
+				key,
+				at: Date.now()
+			}));
+		} catch {}
+	}
+	function forgetQr() {
+		try {
+			window.sessionStorage.removeItem(QR_STORE);
+		} catch {}
+	}
+	/**
+	* Draw the QR code once the canvas is actually in the document.
+	*
+	* The canvas only renders when `qrKey` is set, so drawing it from inside
+	* startQrLogin() read `canvasRef.current === null` (state updates are not
+	* flushed mid-handler) and the login box stayed blank forever. Keyed on the
+	* key so a regenerated code is redrawn too, and skipped when the server
+	* already returned a ready-made image.
+	*/
+	(0, react.useEffect)(() => {
+		const canvas = canvasRef.current;
+		if (canvas === null || qrKey === null || qrImg !== null) return;
+		let cancelled = false;
+		import_browser.toCanvas(canvas, `https://music.163.com/login?codekey=${qrKey}`, {
+			width: 168,
+			margin: 1
+		}).catch((error) => {
+			if (!cancelled && mountedRef.current) setToast(t("lyricQrFail", { error: error instanceof Error ? error.message : String(error) }));
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		qrKey,
+		qrImg,
+		t
+	]);
+	/**
+	* Resume a pending QR login after the panel was closed and reopened: the poll
+	* lives in this component, so an unmount used to abandon a code the user had
+	* already scanned.
+	*/
+	(0, react.useEffect)(() => {
+		let raw = null;
+		try {
+			raw = window.sessionStorage.getItem(QR_STORE);
+		} catch {
+			return;
+		}
+		if (raw === null) return;
+		try {
+			const parsed = JSON.parse(raw);
+			if (typeof parsed.key !== "string" || parsed.key === "" || typeof parsed.at !== "number") return;
+			if (Date.now() - parsed.at > QR_TTL_MS) {
+				forgetQr();
+				return;
+			}
+			setQrKey(parsed.key);
+			setQrState(t("lyricQrScan"));
+			scheduleQrPoll(parsed.key);
+		} catch {}
+	}, []);
 	async function fetchAccountAfterLogin() {
 		for (let i = 0; i < 5; i++) {
 			const acc = await getAccount();
@@ -3585,44 +3808,88 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 		}
 		return getAccount();
 	}
+	/**
+	* Apply one poll answer. Shared by the timer and the manual check so both
+	* paths land the login identically.
+	*/
+	async function applyQrStatus(key, status) {
+		if (!mountedRef.current) return;
+		setQrLastCode(status.code);
+		if (status.code === 803) {
+			clearQrPoll();
+			forgetQr();
+			setQrKey(null);
+			setAccount({
+				loggedIn: true,
+				nickname: status.nickname
+			});
+			setToast(t("lyricLoginOk", { name: status.nickname ?? "" }));
+			const fresh = await fetchAccountAfterLogin();
+			if (!mountedRef.current) return;
+			if (fresh.loggedIn) {
+				setAccount(fresh);
+				if (fresh.uid !== void 0) fetchPlaylists(fresh.uid).then((list) => {
+					if (mountedRef.current) setPlaylists(list);
+				});
+			}
+			return;
+		}
+		if (status.code === 802) {
+			setQrState(t("lyricQrConfirm"));
+			scheduleQrPoll(key);
+			return;
+		}
+		if (status.code === 800) {
+			clearQrPoll();
+			forgetQr();
+			setQrState(t("lyricQrExpired"));
+			return;
+		}
+		scheduleQrPoll(key);
+	}
 	function scheduleQrPoll(key) {
 		if (!mountedRef.current) return;
 		if (pollTimer.current !== void 0) window.clearTimeout(pollTimer.current);
 		setPolling(true);
-		pollTimer.current = window.setTimeout(async () => {
+		pollTimer.current = window.setTimeout(() => {
 			pollTimer.current = void 0;
-			if (!mountedRef.current) return;
-			try {
-				const status = await pollQrLogin(key);
+			(async () => {
 				if (!mountedRef.current) return;
-				if (status.code === 803) {
-					clearQrPoll();
-					setQrKey(null);
-					const acc = {
-						loggedIn: true,
-						nickname: status.nickname
-					};
-					setAccount(acc);
-					setToast(t("lyricLoginOk", { name: status.nickname ?? "" }));
-					if (acc.uid === void 0) {
-						const fresh = await fetchAccountAfterLogin();
-						if (!mountedRef.current) return;
-						setAccount(fresh.loggedIn ? fresh : acc);
-						if (fresh.uid !== void 0) fetchPlaylists(fresh.uid).then((list) => {
-							if (mountedRef.current) setPlaylists(list);
-						});
-					}
-				} else if (status.code === 802) {
-					setQrState(t("lyricQrConfirm"));
-					scheduleQrPoll(key);
-				} else if (status.code === 800) {
-					clearQrPoll();
-					setQrState(t("lyricQrExpired"));
-				} else scheduleQrPoll(key);
-			} catch {
-				if (mountedRef.current) scheduleQrPoll(key);
-			}
+				try {
+					await applyQrStatus(key, await pollQrLogin(key));
+				} catch {
+					if (mountedRef.current) scheduleQrPoll(key);
+				}
+			})();
 		}, 2e3);
+	}
+	/**
+	* Check the login on demand.
+	*
+	* Polling lives in this component, so closing the settings panel — or letting
+	* the code expire — used to end it silently, and a scan confirmed afterwards
+	* was never noticed. This re-asks both the pending code and the session.
+	*/
+	async function checkLogin() {
+		setBusy(true);
+		try {
+			if (qrKey !== null) try {
+				await applyQrStatus(qrKey, await pollQrLogin(qrKey));
+				if (account !== null && account !== "loading" && account.loggedIn) return;
+			} catch {}
+			if (!mountedRef.current) return;
+			const acc = await getAccount();
+			if (!mountedRef.current) return;
+			if (acc.loggedIn) {
+				setAccount(acc);
+				setToast(t("lyricLoginOk", { name: acc.nickname ?? "" }));
+				if (acc.uid !== void 0) fetchPlaylists(acc.uid).then((list) => {
+					if (mountedRef.current) setPlaylists(list);
+				});
+			} else setToast(acc.reason === "risk" ? t("lyricRiskHint", { code: acc.code ?? "?" }) : t("lyricCheckLoginFail"));
+		} finally {
+			if (mountedRef.current) setBusy(false);
+		}
 	}
 	async function startQrLogin() {
 		clearQrPoll();
@@ -3636,13 +3903,7 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 			if (!mountedRef.current) return;
 			setQrKey(key);
 			setQrImg(qrimg ?? null);
-			if (qrimg === void 0 || qrimg === "") {
-				const canvas = canvasRef.current;
-				if (canvas !== null) await import_browser.toCanvas(canvas, `https://music.163.com/login?codekey=${key}`, {
-					width: 168,
-					margin: 1
-				});
-			}
+			rememberQr(key);
 			if (!mountedRef.current) return;
 			setQrState(t("lyricQrScan"));
 			scheduleQrPoll(key);
@@ -3654,12 +3915,21 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 	}
 	function cancelQr() {
 		clearQrPoll();
+		forgetQr();
 		setQrKey(null);
 		setQrImg(null);
+		setQrLastCode(null);
 	}
 	async function doCookieLogin() {
 		const cookie = normalizeCookiePaste(cookieInput);
-		if (cookie === "") return;
+		if (cookie === "") {
+			setToast(t("lyricCookieUnparsed"));
+			return;
+		}
+		if (!hasSessionCookie(cookie)) {
+			setToast(t("lyricCookieNoSession"));
+			return;
+		}
 		setBusy(true);
 		try {
 			const result = await submitCookie(cookie);
@@ -3673,11 +3943,24 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 				setCookieInput("");
 				setToast(t("lyricLoginOk", { name: result.nickname ?? "" }));
 				if (acc.uid !== void 0) fetchPlaylists(acc.uid).then(setPlaylists);
-			} else setToast(t("lyricCookieRejected"));
+			} else if (result.reason === "no-session") setToast(t("lyricCookieNoSession"));
+			else if (result.reason === "risk") setToast(t("lyricRiskHint", { code: result.code ?? "?" }));
+			else setToast(t("lyricCookieRejected"));
 		} catch (err) {
 			setToast(t("lyricCookieFail", { error: err instanceof Error ? err.message : String(err) }));
 		} finally {
 			setBusy(false);
+		}
+	}
+	/** Ask the host what the upstream actually answered (risk control vs dead cookie vs network). */
+	async function runDiagnostics() {
+		setDiagBusy(true);
+		try {
+			setDiag(await getDiagnostics());
+		} catch (err) {
+			setToast(t("lyricDiagFail", { error: err instanceof Error ? err.message : String(err) }));
+		} finally {
+			setDiagBusy(false);
 		}
 	}
 	async function doLogout() {
@@ -3780,6 +4063,35 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 				className: NeteasePanel_module_default.row,
 				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
 					className: NeteasePanel_module_default.fieldLabel,
+					children: t("lyricRealIpLabel")
+				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Input, {
+					className: NeteasePanel_module_default.grow,
+					value: neteaseRealIp,
+					onChange: (e) => onNeteaseRealIp(e.target.value.trim())
+				})]
+			}),
+			/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+				className: NeteasePanel_module_default.row,
+				children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+					size: "sm",
+					variant: "outline",
+					disabled: diagBusy,
+					onClick: () => void runDiagnostics(),
+					children: diagBusy ? t("lyricDiagRunning") : t("lyricDiagButton")
+				})
+			}),
+			/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+				className: NeteasePanel_module_default.hint,
+				children: t("lyricRealIpHint")
+			}),
+			diag !== null ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("pre", {
+				className: NeteasePanel_module_default.diagBox,
+				children: JSON.stringify(diag, null, 2)
+			}) : null,
+			/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+				className: NeteasePanel_module_default.row,
+				children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+					className: NeteasePanel_module_default.fieldLabel,
 					children: t("lyricPosLabel")
 				}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
 					className: NeteasePanel_module_default.pills,
@@ -3813,11 +4125,20 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 				children: t("lyricLoading")
 			}) : account === null || !account.loggedIn ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 				className: NeteasePanel_module_default.loginBox,
-				children: [qrKey === null ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
-					variant: "outline",
-					disabled: busy,
-					onClick: () => void startQrLogin(),
-					children: t("lyricQrLogin")
+				children: [qrKey === null ? /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+					className: NeteasePanel_module_default.pills,
+					children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+						variant: "outline",
+						disabled: busy,
+						onClick: () => void startQrLogin(),
+						children: t("lyricQrLogin")
+					}), /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+						size: "sm",
+						variant: "ghost",
+						disabled: busy,
+						onClick: () => void checkLogin(),
+						children: t("lyricCheckLogin")
+					})]
 				}) : /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
 					className: NeteasePanel_module_default.qrBox,
 					children: [
@@ -3825,7 +4146,8 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 							src: qrImg,
 							width: 168,
 							height: 168,
-							alt: "QR"
+							alt: "QR",
+							onError: () => setQrImg(null)
 						}) : /* @__PURE__ */ (0, react_jsx_runtime.jsx)("canvas", {
 							ref: canvasRef,
 							width: 168,
@@ -3835,11 +4157,24 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 							className: NeteasePanel_module_default.qrState,
 							children: qrState
 						}),
-						polling && /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
-							size: "sm",
-							variant: "ghost",
-							onClick: cancelQr,
-							children: t("lyricQrCancel")
+						qrLastCode !== null ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+							className: NeteasePanel_module_default.qrState,
+							children: t("lyricQrLastCode", { code: qrLastCode })
+						}) : null,
+						/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+							className: NeteasePanel_module_default.pills,
+							children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+								size: "sm",
+								variant: "outline",
+								disabled: busy,
+								onClick: () => void checkLogin(),
+								children: t("lyricCheckLogin")
+							}), polling ? /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Button, {
+								size: "sm",
+								variant: "ghost",
+								onClick: cancelQr,
+								children: t("lyricQrCancel")
+							}) : null]
 						})
 					]
 				}), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
@@ -4037,15 +4372,16 @@ function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, n
 //#endregion
 //#region src/client/musicControls.ts
 /**
-* Lightweight DOM music controls that sit below the session-log button.
+* Compact now-playing pill for the composer dock row.
 *
 * We intentionally keep this outside React: the DSH slot API does not expose a
 * dedicated slot for this position in every version, so this mounts a small
-* player card near the session-log trigger (or as a fixed bottom-left fallback
-* while the trigger is still mounting).
+* player into the dock row that dockPlate.ts tags (next to the lyric line and
+* the stats). It used to float over the session list, which covered the list.
 */
 const CONTAINER_CLASS = "dsh-glass-music-controls";
-const FIXED_CLASS = "dsh-glass-music-controls--fixed";
+/** The composer dock row, tagged by dockPlate.ts. */
+const DOCK_ROW = ".dsh-glass-dock";
 let mediaDisplayEnabled = true;
 const mediaDisplayListeners = /* @__PURE__ */ new Set();
 function setMediaDisplayEnabled(enabled) {
@@ -4059,33 +4395,6 @@ function getMediaDisplayEnabled() {
 function subscribeMediaDisplay(listener) {
 	mediaDisplayListeners.add(listener);
 	return () => mediaDisplayListeners.delete(listener);
-}
-function findSessionLogButton() {
-	for (const selector of [
-		"button[aria-label=\"Session log\"]",
-		"button[aria-label=\"Session Log\"]",
-		"button[aria-label=\"session log\"]",
-		"button[aria-label*=\"session log\"]",
-		"button[aria-label*=\"Session Log\"]",
-		"button[aria-label=\"会话日志\"]",
-		"button[aria-label*=\"会话日志\"]",
-		"button[title=\"Session log\"]",
-		"button[title=\"Session Log\"]",
-		"button[title*=\"session log\"]",
-		"button[title*=\"Session Log\"]",
-		"button[title=\"会话日志\"]",
-		"button[title*=\"会话日志\"]",
-		"[data-testid=\"session-log\"]",
-		"[data-testid=\"session_log\"]",
-		".session-log"
-	]) {
-		const el = document.querySelector(selector);
-		if (el !== null) return el;
-	}
-	return Array.from(document.querySelectorAll("button, [role=\"button\"]")).find((el) => {
-		const text = (el.textContent ?? "").toLowerCase();
-		return text.includes("session log") || text.includes("会话日志") || text.includes("会话记录");
-	}) ?? null;
 }
 function createButton(label, title) {
 	const button = document.createElement("button");
@@ -4120,6 +4429,9 @@ function mountMusicControls(t) {
 		coverPlaceholder.style.display = "flex";
 	});
 	coverWrap.append(coverImg, coverPlaceholder);
+	const titleSpan = document.createElement("span");
+	titleSpan.className = "dsh-glass-music-title";
+	titleSpan.style.display = "none";
 	const progressWrap = document.createElement("div");
 	progressWrap.className = "dsh-glass-music-progress";
 	const progressInput = document.createElement("input");
@@ -4158,13 +4470,19 @@ function mountMusicControls(t) {
 	volumeInput.setAttribute("aria-label", t("volumeLabel"));
 	volumeWrap.append(volumeIcon, volumeInput);
 	controls.append(prevButton, toggleButton, nextButton, volumeWrap);
-	container.append(coverWrap, progressWrap, controls);
+	container.append(coverWrap, titleSpan, progressWrap, controls);
 	const disposers = [];
 	let mediaEnabled = getMediaDisplayEnabled();
 	const update = () => {
 		const snap = playback.getSnapshot();
 		const visible = snap.song !== null;
-		container.style.display = visible && mediaEnabled ? "flex" : "none";
+		container.style.display = visible && mediaEnabled ? "inline-flex" : "none";
+		if (snap.song !== null) {
+			const label = `${snap.song.name} - ${snap.song.artists}`;
+			container.title = label;
+			titleSpan.textContent = label;
+			titleSpan.style.display = getLyricPos() === "hidden" ? "" : "none";
+		}
 		const cover = snap.song?.cover ?? "";
 		if (cover !== "") {
 			coverImg.src = cover;
@@ -4204,64 +4522,29 @@ function mountMusicControls(t) {
 		const duration = Number.isFinite(snap.duration) ? snap.duration : 0;
 		if (duration > 0) playback.seek(Number(progressInput.value) / 1e3 * duration);
 	});
-	const tryAttach = () => {
-		const sessionLog = findSessionLogButton();
-		if (sessionLog === null) return false;
-		const rect = sessionLog.getBoundingClientRect();
-		container.style.position = "fixed";
-		container.style.top = `${rect.bottom + 30}px`;
-		const cardWidth = container.offsetWidth || 180;
-		const maxLeft = window.innerWidth - cardWidth - 8;
-		container.style.left = `${Math.max(8, Math.min(rect.left, maxLeft))}px`;
-		container.style.zIndex = "1000";
-		if (container.parentElement !== document.body) document.body.appendChild(container);
-		container.classList.add(FIXED_CLASS);
+	/**
+	* Put the pill in the composer dock row.
+	*
+	* The row is tagged by dockPlate.ts, so the pill is simply prepended into it
+	* and inherits the row's layout: no fixed positioning, no covering the
+	* session list. When there is no composer (settings-only views, no session)
+	* there is nothing to attach to and the pill stays hidden rather than
+	* floating over content.
+	*/
+	const attach = () => {
+		const dock = document.querySelector(DOCK_ROW);
+		if (dock === null) return false;
+		container.style.position = "";
+		container.style.top = "";
+		container.style.left = "";
+		container.style.zIndex = "";
+		if (container.parentElement !== dock) dock.prepend(container);
 		return true;
 	};
-	if (!tryAttach()) {
-		document.body.appendChild(container);
-		container.style.position = "fixed";
-		container.style.top = "56px";
-		container.style.left = "12px";
-		container.style.zIndex = "1000";
-		container.classList.add(FIXED_CLASS);
-		const retryTimer = window.setInterval(() => {
-			if (tryAttach()) window.clearInterval(retryTimer);
-		}, 500);
-		const timeout = window.setTimeout(() => window.clearInterval(retryTimer), 1e4);
-		disposers.push(() => {
-			window.clearInterval(retryTimer);
-			window.clearTimeout(timeout);
-		});
-	}
-	const reposition = () => {
-		if (!tryAttach()) {
-			document.body.appendChild(container);
-			container.style.position = "fixed";
-			container.style.top = "56px";
-			container.style.left = "12px";
-			container.style.zIndex = "1000";
-			container.classList.add(FIXED_CLASS);
-		}
-	};
-	window.addEventListener("scroll", reposition, true);
-	window.addEventListener("resize", reposition);
-	disposers.push(() => {
-		window.removeEventListener("scroll", reposition, true);
-		window.removeEventListener("resize", reposition);
-	});
+	attach();
 	const keepAlive = window.setInterval(() => {
-		if (!container.isConnected) {
-			if (!tryAttach()) {
-				document.body.appendChild(container);
-				container.style.position = "fixed";
-				container.style.top = "56px";
-				container.style.left = "12px";
-				container.style.zIndex = "1000";
-				container.classList.add(FIXED_CLASS);
-			}
-		}
-	}, 2e3);
+		if (!container.isConnected && attach()) update();
+	}, 1e3);
 	disposers.push(() => window.clearInterval(keepAlive));
 	update();
 	return () => {
@@ -4318,6 +4601,29 @@ function mediaName(url) {
 	const name = url.split("/").pop() ?? url;
 	return name.length > 36 ? `${name.slice(0, 33)}…` : name;
 }
+/** UI text weights offered in the readability section; 0 = leave as authored. */
+const FONT_WEIGHTS = [
+	{
+		id: "default",
+		value: 0,
+		labelKey: "fontWeightDefault"
+	},
+	{
+		id: "regular",
+		value: 400,
+		labelKey: "fontWeightRegular"
+	},
+	{
+		id: "medium",
+		value: 500,
+		labelKey: "fontWeightMedium"
+	},
+	{
+		id: "semibold",
+		value: 600,
+		labelKey: "fontWeightSemibold"
+	}
+];
 function GlassPanel({ t, engine }) {
 	const [config, setConfig] = (0, react.useState)({
 		...DEFAULT_CONFIG,
@@ -4569,6 +4875,66 @@ function GlassPanel({ t, engine }) {
 							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
 								className: GlassPanel_module_default.hint,
 								children: t("blurHint")
+							})
+						]
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
+				className: GlassPanel_module_default.card,
+				children: [
+					/* @__PURE__ */ (0, react_jsx_runtime.jsx)("h3", {
+						className: GlassPanel_module_default.cardTitle,
+						children: t("readTitle")
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: GlassPanel_module_default.field,
+						children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+								className: GlassPanel_module_default.fieldHead,
+								children: [/* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("contentOpacityLabel") }), /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
+									className: GlassPanel_module_default.value,
+									children: [Math.round(config.contentOpacity * 100), "%"]
+								})]
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("input", {
+								type: "range",
+								className: GlassPanel_module_default.range,
+								min: 50,
+								max: 100,
+								value: Math.round(config.contentOpacity * 100),
+								onChange: (e) => update({
+									...config,
+									contentOpacity: Number(e.target.value) / 100
+								})
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: GlassPanel_module_default.hint,
+								children: t("contentOpacityHint")
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("div", {
+						className: GlassPanel_module_default.field,
+						children: [
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: GlassPanel_module_default.fieldHead,
+								children: /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", { children: t("fontWeightLabel") })
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("div", {
+								className: GlassPanel_module_default.pills,
+								children: FONT_WEIGHTS.map((weight) => /* @__PURE__ */ (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Pill, {
+									active: config.fontWeight === weight.value,
+									onClick: () => update({
+										...config,
+										fontWeight: weight.value
+									}),
+									children: t(weight.labelKey)
+								}, weight.id))
+							}),
+							/* @__PURE__ */ (0, react_jsx_runtime.jsx)("p", {
+								className: GlassPanel_module_default.hint,
+								children: t("fontWeightHint")
 							})
 						]
 					})
@@ -4848,6 +5214,11 @@ function GlassPanel({ t, engine }) {
 				onNeteaseApiBase: (base) => update({
 					...config,
 					neteaseApiBase: base
+				}),
+				neteaseRealIp: config.neteaseRealIp,
+				onNeteaseRealIp: (ip) => update({
+					...config,
+					neteaseRealIp: ip
 				})
 			}),
 			/* @__PURE__ */ (0, react_jsx_runtime.jsxs)("section", {
@@ -4937,11 +5308,11 @@ function GlassPanel({ t, engine }) {
 //#endregion
 //#region src/client/LyricsLine.module.css
 var LyricsLine_module_default = {
-	"icon": "kclPIa_icon",
-	"line": "kclPIa_line",
-	"root": "kclPIa_root",
-	"sep": "kclPIa_sep",
-	"title": "kclPIa_title"
+	"icon": "vK6gIW_icon",
+	"line": "vK6gIW_line",
+	"root": "vK6gIW_root",
+	"sep": "vK6gIW_sep",
+	"title": "vK6gIW_title"
 };
 //#endregion
 //#region src/client/LyricsLine.tsx
@@ -4953,12 +5324,17 @@ var LyricsLine_module_default = {
 function LyricsLine({ t }) {
 	const state = (0, react.useSyncExternalStore)(playback.subscribe, playback.getSnapshot);
 	const pos = (0, react.useSyncExternalStore)(subscribeLyricPos, getLyricPos);
-	if (pos === "hidden") return null;
-	if (state.song === null) return null;
+	const anchor = /* @__PURE__ */ (0, react_jsx_runtime.jsx)("span", {
+		"data-dsh-glass-dock-anchor": "",
+		hidden: true
+	});
+	if (pos === "hidden") return anchor;
+	if (state.song === null) return anchor;
 	const title = `${state.song.name} - ${state.song.artists || (t !== void 0 ? t("lyricUnknownArtist") : "未知歌手")}`;
 	const line = state.loading ? t !== void 0 ? t("lyricLoading") : "加载中…" : state.error !== null ? t !== void 0 ? t(state.error) : "该歌曲暂不可播放（版权/VIP 限制）" : state.currentLine !== null ? state.currentLine.text : state.playing ? "♪" : t !== void 0 ? t("lyricPaused") : "已暂停";
 	return /* @__PURE__ */ (0, react_jsx_runtime.jsxs)("span", {
 		className: LyricsLine_module_default.root,
+		"data-dsh-glass-dock-anchor": "",
 		"data-pos": pos,
 		title: `${title}\n${line}`,
 		children: [
@@ -4980,6 +5356,67 @@ function LyricsLine({ t }) {
 			})
 		]
 	});
+}
+//#endregion
+//#region src/client/dockPlate.ts
+/**
+* Frosted backing for the composer dock row.
+*
+* The row under the input card carries the output-speed / cache readouts, the
+* session-stats trigger, this plugin's lyric line and the context-usage meter.
+* DSH ships it with no background of its own, so all of that dimmed text sits
+* straight on the wallpaper and loses contrast — the one place in the composer
+* with nothing behind the glyphs.
+*
+* The row cannot be targeted from CSS: its module class name is hashed per
+* build (`<hash>_dock`), and only the `_dock` suffix is stable. So it is found
+* by walking up from this plugin's own dock marker (see LyricsLine.tsx) and
+* tagged with a class glass.css can style.
+*
+* Deliberately not styled with backdrop-filter: the context meter opens a
+* `position: fixed` detail panel from inside this row, and a containing block
+* on the row would place that panel relative to the row instead of the
+* viewport. The wallpaper behind the row is already blurred by the background
+* layer, so a translucent plate still reads as frosted.
+*/
+const MARK = "dsh-glass-dock";
+const ANCHOR = "[data-dsh-glass-dock-anchor]";
+/** `<hashed>_dock` — the only stable part of the row's generated class name. */
+const DOCK_CLASS = /(?:^|\s)[A-Za-z0-9_-]*_dock(?:\s|$)/;
+/** How far to climb: marker → slot entry → slot wrapper → the dock row. */
+const MAX_DEPTH = 4;
+/** The outermost `_dock` ancestor of the marker, i.e. the row holding every dock item. */
+function dockRowFor(anchor) {
+	let node = anchor;
+	let dock = null;
+	for (let depth = 0; depth < MAX_DEPTH; depth += 1) {
+		node = node.parentElement;
+		if (node === null) break;
+		if (typeof node.className === "string" && DOCK_CLASS.test(node.className)) dock = node;
+	}
+	return dock;
+}
+/**
+* Tag the composer dock row and keep the tag applied across re-renders.
+* @returns Disposer that removes both the tag and the watcher.
+*/
+function mountDockPlate() {
+	let marked = null;
+	const sync = () => {
+		const anchor = document.querySelector(ANCHOR);
+		const dock = anchor === null ? null : dockRowFor(anchor);
+		if (dock === marked) return;
+		marked?.classList.remove(MARK);
+		marked = dock;
+		marked?.classList.add(MARK);
+	};
+	sync();
+	const timer = window.setInterval(sync, 2e3);
+	return () => {
+		window.clearInterval(timer);
+		marked?.classList.remove(MARK);
+		marked = null;
+	};
 }
 //#endregion
 //#region src/client/index.ts
@@ -5014,16 +5451,16 @@ const GLASS_TOKENS = {
 		dark: "var(--glass-surface-dark)"
 	},
 	"--dsw-alias-bg-layer-1": {
-		light: "var(--glass-surface-light)",
-		dark: "var(--glass-surface-dark)"
+		light: "var(--glass-panel-light)",
+		dark: "var(--glass-panel-dark)"
 	},
 	"--dsw-alias-bg-layer-2": {
-		light: "var(--glass-surface-light)",
-		dark: "var(--glass-surface-dark)"
+		light: "var(--glass-panel-light)",
+		dark: "var(--glass-panel-dark)"
 	},
 	"--dsw-alias-bg-layer-3": {
-		light: "var(--glass-surface-light)",
-		dark: "var(--glass-surface-dark)"
+		light: "var(--glass-panel-light)",
+		dark: "var(--glass-panel-dark)"
 	},
 	"--dsw-alias-bg-module-platform": {
 		light: "var(--glass-surface-light)",
@@ -5052,6 +5489,94 @@ const GLASS_TOKENS = {
 	"--dsw-alias-brand-primary": {
 		light: "rgba(65, 118, 230, 0.92)",
 		dark: "rgba(126, 168, 255, 0.94)"
+	},
+	"--dsw-alias-button-elevated-fill": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-button-floating-fill": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-button-floating-hover": {
+		light: "var(--glass-hover-light)",
+		dark: "var(--glass-hover-dark)"
+	},
+	"--dsw-alias-button-ghost-active-fill": {
+		light: "var(--glass-hover-light)",
+		dark: "var(--glass-hover-dark)"
+	},
+	"--dsw-alias-button-ghost-active-hover": {
+		light: "var(--glass-hover-light)",
+		dark: "var(--glass-hover-dark)"
+	},
+	"--dsw-alias-interactive-bg-hover-solid": {
+		light: "var(--glass-hover-light)",
+		dark: "var(--glass-hover-dark)"
+	},
+	"--dsw-specific-sidebar-nav-item-hover": {
+		light: "var(--glass-hover-light)",
+		dark: "var(--glass-hover-dark)"
+	},
+	"--dsw-alias-bg-multi-select": {
+		light: "var(--glass-hover-light)",
+		dark: "var(--glass-hover-dark)"
+	},
+	"--dsw-alias-menu-group-header-fill": {
+		light: "rgba(250, 250, 252, 0.92)",
+		dark: "rgba(22, 22, 30, 0.93)"
+	},
+	"--dsw-specific-bubble": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-specific-input-major": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-code-block": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-code-block-banner": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-inline-code": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-tag": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-citation": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-placeholder": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-code-segment-selected": {
+		light: "var(--glass-solid-light)",
+		dark: "var(--glass-solid-dark)"
+	},
+	"--dsw-alias-markdown-code-segment-unselected": {
+		light: "var(--glass-surface-light)",
+		dark: "var(--glass-surface-dark)"
+	},
+	"--dsw-mask-blur": {
+		light: "blur(var(--glass-blur))",
+		dark: "blur(var(--glass-blur))"
+	},
+	"--dsw-alias-label-caption": {
+		light: "var(--dsw-static-neutral-bluish-600)",
+		dark: "var(--dsw-static-neutral-bluish-400)"
+	},
+	"--dsw-alias-label-tertiary": {
+		light: "var(--dsw-static-neutral-bluish-700)",
+		dark: "var(--dsw-static-neutral-bluish-300)"
 	}
 };
 function apply(ctx) {
@@ -5078,6 +5603,7 @@ function apply(ctx) {
 		en
 	}), "dsh-glass-ui: dictionaries");
 	const t = ctx.locale.bind(NS);
+	ctx.effect(() => mountDockPlate(), "dsh-glass-ui: dock plate");
 	ctx.effect(() => mountMusicControls(t), "dsh-glass-ui: music controls");
 	ctx.slots.inject("conversation.composer.dock", () => ctx.slots.register({
 		name: "conversation.composer.dock",

@@ -1,8 +1,14 @@
 // Diagnose the configured proxy: reachability, exit IP, and weapi through it.
+// Usage: node scripts/proxy-diag.mjs <proxy-url>   (or set GLASS_PROXY)
+// The proxy is supplied at run time on purpose — no local address is baked in.
 import { ProxyAgent } from 'undici'
 import { createCipheriv, createPublicKey, publicEncrypt, randomBytes, constants } from 'node:crypto'
 
-const PROXY = 'http://127.0.0.1:7890'
+const PROXY = process.env.GLASS_PROXY ?? process.argv[2] ?? ''
+if (PROXY === '') {
+  console.error('usage: node scripts/proxy-diag.mjs <proxy-url>   e.g. http://127.0.0.1:7890')
+  process.exit(2)
+}
 let agent
 try {
   agent = new ProxyAgent(PROXY)

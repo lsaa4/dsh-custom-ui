@@ -160,3 +160,21 @@
   width: 80px;
   accent-color: var(--dsw-alias-brand-primary, #4176e6);
 }
+
+/* risk-control diagnosis dump: raw upstream codes, so keep it readable/copyable */
+.diagBox {
+  max-height: 220px;
+  margin: 0;
+  padding: 8px 10px;
+  overflow: auto;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 8px;
+  background: var(--dsw-alias-markdown-code-block, rgba(127, 127, 127, 0.08));
+  color: var(--dsw-alias-label-secondary);
+  font-family: var(--dsh-mono-font-family, ui-monospace, Consolas, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}

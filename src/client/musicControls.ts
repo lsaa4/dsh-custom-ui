@@ -1,16 +1,17 @@
 /**
- * Lightweight DOM music controls that sit below the session-log button.
+ * Compact now-playing pill for the composer dock row.
  *
  * We intentionally keep this outside React: the DSH slot API does not expose a
  * dedicated slot for this position in every version, so this mounts a small
- * player card near the session-log trigger (or as a fixed bottom-left fallback
- * while the trigger is still mounting).
+ * player into the dock row that dockPlate.ts tags (next to the lyric line and
+ * the stats). It used to float over the session list, which covered the list.
  */
-import { playback, type PlaybackState } from './lyrics.ts'
+import { getLyricPos, playback, type PlaybackState } from './lyrics.ts'
 import type { Translate } from './locales.ts'
 
 const CONTAINER_CLASS = 'dsh-glass-music-controls'
-const FIXED_CLASS = 'dsh-glass-music-controls--fixed'
+/** The composer dock row, tagged by dockPlate.ts. */
+const DOCK_ROW = '.dsh-glass-dock'
 
 // Simple store so the NetEase settings panel can toggle the floating media card.
 let mediaDisplayEnabled = true
@@ -31,37 +32,6 @@ export function subscribeMediaDisplay(listener: () => void): () => void {
   return () => mediaDisplayListeners.delete(listener)
 }
 
-
-function findSessionLogButton(): HTMLElement | null {
-  const selectors = [
-    'button[aria-label="Session log"]',
-    'button[aria-label="Session Log"]',
-    'button[aria-label="session log"]',
-    'button[aria-label*="session log"]',
-    'button[aria-label*="Session Log"]',
-    'button[aria-label="会话日志"]',
-    'button[aria-label*="会话日志"]',
-    'button[title="Session log"]',
-    'button[title="Session Log"]',
-    'button[title*="session log"]',
-    'button[title*="Session Log"]',
-    'button[title="会话日志"]',
-    'button[title*="会话日志"]',
-    '[data-testid="session-log"]',
-    '[data-testid="session_log"]',
-    '.session-log',
-  ]
-  for (const selector of selectors) {
-    const el = document.querySelector<HTMLElement>(selector)
-    if (el !== null) return el
-  }
-  // Last resort: scan buttons / role=button elements by their visible text.
-  const candidates = Array.from(document.querySelectorAll<HTMLElement>('button, [role="button"]'))
-  return candidates.find((el) => {
-    const text = (el.textContent ?? '').toLowerCase()
-    return text.includes('session log') || text.includes('会话日志') || text.includes('会话记录')
-  }) ?? null
-}
 
 function createButton(label: string, title: string): HTMLButtonElement {
   const button = document.createElement('button')
@@ -100,6 +70,12 @@ export function mountMusicControls(t: Translate): () => void {
     coverPlaceholder.style.display = 'flex'
   })
   coverWrap.append(coverImg, coverPlaceholder)
+
+  // Song label; only shown when the dock's lyric line is hidden (otherwise the
+  // lyric line right next to it already carries the name).
+  const titleSpan = document.createElement('span')
+  titleSpan.className = 'dsh-glass-music-title'
+  titleSpan.style.display = 'none'
 
   // Progress
   const progressWrap = document.createElement('div')
@@ -144,7 +120,7 @@ export function mountMusicControls(t: Translate): () => void {
   volumeWrap.append(volumeIcon, volumeInput)
 
   controls.append(prevButton, toggleButton, nextButton, volumeWrap)
-  container.append(coverWrap, progressWrap, controls)
+  container.append(coverWrap, titleSpan, progressWrap, controls)
 
   const disposers: Array<() => void> = []
   let mediaEnabled = getMediaDisplayEnabled()
@@ -152,7 +128,15 @@ export function mountMusicControls(t: Translate): () => void {
   const update = (): void => {
     const snap: PlaybackState = playback.getSnapshot()
     const visible = snap.song !== null
-    container.style.display = visible && mediaEnabled ? 'flex' : 'none'
+    container.style.display = visible && mediaEnabled ? 'inline-flex' : 'none'
+    if (snap.song !== null) {
+      const label = `${snap.song.name} - ${snap.song.artists}`
+      container.title = label
+      titleSpan.textContent = label
+      // the dock's lyric line already shows this, so the pill's own label is
+      // only needed when the lyric line is hidden
+      titleSpan.style.display = getLyricPos() === 'hidden' ? '' : 'none'
+    }
 
     const cover = snap.song?.cover ?? ''
     if (cover !== '') {
@@ -204,70 +188,34 @@ export function mountMusicControls(t: Translate): () => void {
     }
   })
 
-  const tryAttach = (): boolean => {
-    const sessionLog = findSessionLogButton()
-    if (sessionLog === null) return false
-    const rect = sessionLog.getBoundingClientRect()
-      container.style.position = 'fixed'
-      container.style.top = `${rect.bottom + 30}px`
-      const cardWidth = container.offsetWidth || 180
-      const maxLeft = window.innerWidth - cardWidth - 8
-      container.style.left = `${Math.max(8, Math.min(rect.left, maxLeft))}px`
-      container.style.zIndex = '1000'
-      if (container.parentElement !== document.body) document.body.appendChild(container)
-    container.classList.add(FIXED_CLASS)
+  /**
+   * Put the pill in the composer dock row.
+   *
+   * The row is tagged by dockPlate.ts, so the pill is simply prepended into it
+   * and inherits the row's layout: no fixed positioning, no covering the
+   * session list. When there is no composer (settings-only views, no session)
+   * there is nothing to attach to and the pill stays hidden rather than
+   * floating over content.
+   */
+  const attach = (): boolean => {
+    const dock = document.querySelector<HTMLElement>(DOCK_ROW)
+    if (dock === null) return false
+    // layout belongs to glass.css; clear whatever a previous version set inline
+    container.style.position = ''
+    container.style.top = ''
+    container.style.left = ''
+    container.style.zIndex = ''
+    if (container.parentElement !== dock) dock.prepend(container)
     return true
   }
 
-  if (!tryAttach()) {
-    document.body.appendChild(container)
-      container.style.position = 'fixed'
-      container.style.top = '56px'
-      container.style.left = '12px'
-      container.style.zIndex = '1000'
-    container.classList.add(FIXED_CLASS)
-    const retryTimer = window.setInterval(() => {
-      if (tryAttach()) window.clearInterval(retryTimer)
-    }, 500)
-    const timeout = window.setTimeout(() => window.clearInterval(retryTimer), 10000)
-    disposers.push(() => {
-      window.clearInterval(retryTimer)
-      window.clearTimeout(timeout)
-    })
-  }
+  attach()
 
-    // Reposition the floating card on scroll/resize without touching the top bar.
-    const reposition = (): void => {
-      if (!tryAttach()) {
-        document.body.appendChild(container)
-          container.style.position = 'fixed'
-          container.style.top = '56px'
-          container.style.left = '12px'
-          container.style.zIndex = '1000'
-        container.classList.add(FIXED_CLASS)
-      }
-    }
-    window.addEventListener('scroll', reposition, true)
-    window.addEventListener('resize', reposition)
-    disposers.push(() => {
-      window.removeEventListener('scroll', reposition, true)
-      window.removeEventListener('resize', reposition)
-    })
-
-  // React may re-render the sidebar and drop our foreign DOM node; reattach it
-  // if that happens while the plugin is still active.
+  // React re-creates the composer subtree on session switches and the dock can
+  // appear after the plugin does, so keep the node attached while active.
   const keepAlive = window.setInterval(() => {
-    if (!container.isConnected) {
-      if (!tryAttach()) {
-        document.body.appendChild(container)
-            container.style.position = 'fixed'
-            container.style.top = '56px'
-            container.style.left = '12px'
-            container.style.zIndex = '1000'
-        container.classList.add(FIXED_CLASS)
-      }
-    }
-  }, 2000)
+    if (!container.isConnected && attach()) update()
+  }, 1000)
   disposers.push(() => window.clearInterval(keepAlive))
 
   update()

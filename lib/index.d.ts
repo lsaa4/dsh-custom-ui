@@ -19,6 +19,13 @@ export interface GlassConfig {
     opacity: number;
     /** backdrop-filter blur radius in px, 4..40. */
     blur: number;
+    /**
+     * Solidity of text-bearing surfaces (dialogs, panels, composer card, code
+     * blocks, message bubble); 0.5..1, independent of the background glass.
+     */
+    contentOpacity: number;
+    /** UI font weight; 0 leaves every element's own weight alone. */
+    fontWeight: number;
     /** Font family applied to the whole UI; '' keeps the built-in font. */
     font: string;
     /** Uploaded font file URL (/glass-ui/media/...) for a custom @font-face. */
@@ -51,6 +58,12 @@ export interface GlassConfig {
     neteaseProxy: string;
     /** Remote NeteaseCloudMusicApi server base URL (public/self-hosted instance). */
     neteaseApiBase: string;
+    /**
+     * `X-Real-IP` / `X-Forwarded-For` sent on NetEase requests. NetEase's edge
+     * challenges datacenter/overseas addresses before reading the payload, which
+     * shows up as a QR login that never confirms; '' sends no such header.
+     */
+    neteaseRealIp: string;
 }
 export declare const DEFAULT_CONFIG: GlassConfig;
 export declare const name = "dsh-glass-ui";

@@ -51,6 +51,14 @@ function mediaName(url: string): string {
   return name.length > 36 ? `${name.slice(0, 33)}…` : name
 }
 
+/** UI text weights offered in the readability section; 0 = leave as authored. */
+const FONT_WEIGHTS: ReadonlyArray<{ id: string; value: number; labelKey: string }> = [
+  { id: 'default', value: 0, labelKey: 'fontWeightDefault' },
+  { id: 'regular', value: 400, labelKey: 'fontWeightRegular' },
+  { id: 'medium', value: 500, labelKey: 'fontWeightMedium' },
+  { id: 'semibold', value: 600, labelKey: 'fontWeightSemibold' },
+]
+
 export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
   const [config, setConfig] = useState<GlassConfig>({ ...DEFAULT_CONFIG, mediaDisplay: getMediaDisplayEnabled() })
   const [saveState, setSaveState] = useState<SaveState>('idle')
@@ -302,6 +310,43 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
         </div>
       </section>
 
+      {/* ---- readability: how solid text surfaces are, and how heavy type is ---- */}
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>{t('readTitle')}</h3>
+        <div className={styles.field}>
+          <div className={styles.fieldHead}>
+            <span>{t('contentOpacityLabel')}</span>
+            <span className={styles.value}>{Math.round(config.contentOpacity * 100)}%</span>
+          </div>
+          <input
+            type="range"
+            className={styles.range}
+            min={50}
+            max={100}
+            value={Math.round(config.contentOpacity * 100)}
+            onChange={(e) => update({ ...config, contentOpacity: Number(e.target.value) / 100 })}
+          />
+          <p className={styles.hint}>{t('contentOpacityHint')}</p>
+        </div>
+        <div className={styles.field}>
+          <div className={styles.fieldHead}>
+            <span>{t('fontWeightLabel')}</span>
+          </div>
+          <div className={styles.pills}>
+            {FONT_WEIGHTS.map((weight) => (
+              <Pill
+                key={weight.id}
+                active={config.fontWeight === weight.value}
+                onClick={() => update({ ...config, fontWeight: weight.value })}
+              >
+                {t(weight.labelKey)}
+              </Pill>
+            ))}
+          </div>
+          <p className={styles.hint}>{t('fontWeightHint')}</p>
+        </div>
+      </section>
+
       {/* ---- font ---- */}
       <section className={styles.card}>
         <h3 className={styles.cardTitle}>{t('fontTitle')}</h3>
@@ -508,6 +553,8 @@ export function GlassPanel({ t, engine }: GlassPanelProps): JSX.Element {
         onNeteaseProxy={(proxy: string) => update({ ...config, neteaseProxy: proxy })}
         neteaseApiBase={config.neteaseApiBase}
         onNeteaseApiBase={(base: string) => update({ ...config, neteaseApiBase: base })}
+        neteaseRealIp={config.neteaseRealIp}
+        onNeteaseRealIp={(ip: string) => update({ ...config, neteaseRealIp: ip })}
       />
 
       {/* ---- custom css ---- */}

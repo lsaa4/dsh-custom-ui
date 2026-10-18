@@ -8,6 +8,15 @@ export interface GlassConfig {
   opacity: number
   /** Background blur radius in px, 4..40. */
   blur: number
+  /**
+   * Solidity of text-bearing surfaces — dialogs and panels (bg layers), the
+   * composer card, code blocks and the message bubble. Deliberately separate
+   * from the background glass so legibility can be raised without making the
+   * whole app opaque. 0.5..1.
+   */
+  contentOpacity: number
+  /** UI font weight; 0 leaves every element's own weight alone. */
+  fontWeight: number
   /** Font family applied to the whole UI; '' keeps the built-in font. */
   font: string
   /** Uploaded font file URL (/glass-ui/media/...) for a custom @font-face. */
@@ -40,11 +49,20 @@ export interface GlassConfig {
   neteaseProxy: string
   /** Remote NeteaseCloudMusicApi server base URL (public/self-hosted instance). */
   neteaseApiBase: string
+  /**
+   * Address sent as `X-Real-IP` / `X-Forwarded-For` on NetEase requests.
+   * NetEase's edge challenges datacenter and overseas addresses before it even
+   * looks at the payload, which shows up as a QR login that never confirms.
+   * '' sends no such headers at all.
+   */
+  neteaseRealIp: string
 }
 
 export const DEFAULT_CONFIG: GlassConfig = {
   opacity: 0.72,
   blur: 18,
+  contentOpacity: 0.88,
+  fontWeight: 0,
   font: '',
   fontUrl: '',
   bgType: 'none',
@@ -61,6 +79,7 @@ export const DEFAULT_CONFIG: GlassConfig = {
     mediaDisplay: true,
   neteaseProxy: '',
   neteaseApiBase: '',
+  neteaseRealIp: '118.88.88.88',
 }
 
 export type BgType = GlassConfig['bgType']
@@ -70,6 +89,15 @@ export type AnimLevel = GlassConfig['animLevel']
 /** Migrate a raw (possibly legacy) config into the current shape. */
 export function normalizeConfig(raw: Partial<GlassConfig>): GlassConfig {
   const merged = { ...DEFAULT_CONFIG, ...raw } as GlassConfig
+  // independent knobs: clamp rather than let a bad stored value through
+  const content = typeof merged.contentOpacity === 'number' && Number.isFinite(merged.contentOpacity)
+    ? merged.contentOpacity
+    : DEFAULT_CONFIG.contentOpacity
+  merged.contentOpacity = Math.min(1, Math.max(0.5, content))
+  const weight = typeof merged.fontWeight === 'number' && Number.isFinite(merged.fontWeight)
+    ? merged.fontWeight
+    : DEFAULT_CONFIG.fontWeight
+  merged.fontWeight = [0, 300, 400, 500, 600, 700].includes(weight) ? weight : 0
   // legacy: animations boolean → animLevel
   const legacyAnimations = (raw as Record<string, unknown>).animations
   if (legacyAnimations === false && merged.animLevel === 'soft') merged.animLevel = 'none'

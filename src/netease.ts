@@ -43,6 +43,204 @@ function agentFor(proxyUrl: string): HttpAgent | undefined {
   return proxyAgentCache.agent
 }
 
+/**
+ * Address sent in `X-Real-IP` / `X-Forwarded-For` on every music.163.com call.
+ *
+ * NetEase's edge decides on the client address before it looks at the payload:
+ * datacenter ranges, overseas addresses and addresses already associated with
+ * automated traffic get challenged instead of served. The symptom is a login
+ * that never confirms — the QR key is handed out but the scan stays at 801, and
+ * weapi answers `-460` or `250` instead of data — while the very same cookie
+ * works fine in a browser on the same account.
+ *
+ * Presenting a mainland address in those two headers is what the
+ * NeteaseCloudMusicApi project calls `realIP`, and it is the first thing to try
+ * when the QR flow stalls. An empty setting sends no headers at all and lets
+ * the real client address speak for itself.
+ */
+const DEFAULT_REAL_IP = '118.88.88.88'
+
+function readRealIp(): string {
+  try {
+    const home = process.env.DSH_HOME ?? join(homedir(), '.dsh')
+    const raw = JSON.parse(readFileSync(join(home, 'data', 'glass-ui', 'config.json'), 'utf8')) as {
+      neteaseRealIp?: unknown
+    }
+    // an explicitly empty value means "send nothing", so only a missing key
+    // falls back to the default
+    if (typeof raw.neteaseRealIp === 'string') return raw.neteaseRealIp.trim()
+  } catch {
+    /* fall through to the default */
+  }
+  return DEFAULT_REAL_IP
+}
+
+/** Headers every direct music.163.com request carries. */
+function neteaseHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const realIp = readRealIp()
+  return {
+    'user-agent': NETBASE_UA,
+    'referer': 'https://music.163.com/',
+    ...(realIp === '' ? {} : { 'x-real-ip': realIp, 'x-forwarded-for': realIp }),
+    ...extra,
+  }
+}
+
+/**
+ * Upstream answers that mean "challenged / rate-limited / needs verification",
+ * not "this session ended". Treating them as an invalid cookie is what made a
+ * perfectly good Cookie look expired every time risk control kicked in.
+ */
+const RISK_CODES: ReadonlySet<number> = new Set([-460, -2, 250, 301, 882])
+
+interface UpstreamVerdict {
+  code: number | null
+  message: string | null
+  risk: boolean
+}
+
+/** Read the code/message out of a weapi body and classify it. */
+function upstreamVerdict(json: unknown): UpstreamVerdict {
+  const body = (json ?? {}) as { code?: unknown; message?: unknown; msg?: unknown }
+  const code = typeof body.code === 'number' ? body.code : null
+  const message = typeof body.message === 'string'
+    ? body.message
+    : typeof body.msg === 'string'
+      ? body.msg
+      : null
+  return { code, message, risk: code !== null && RISK_CODES.has(code) }
+}
+
+/**
+ * Legacy plain `/api/` transport.
+ *
+ * NetEase's edge answers `/weapi/*` with HTTP 200 and an *empty body* for
+ * traffic it declines to serve — verified from a home network, all hosts and
+ * header shapes alike, while `GET` requests and the legacy plain paths keep
+ * answering normally. The old QR handshake is the same two steps in plain
+ * form, so login falls back to it whenever the encrypted path comes back
+ * empty.
+ */
+async function legacyJson(
+  path: string,
+  cookie: string,
+): Promise<{ json: Record<string, unknown>; setCookie: string[] }> {
+  const proxy = readProxy()
+  const agent = agentFor(proxy)
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: neteaseHeaders(
+      cookie === '' ? {} : { cookie: `os=pc; appver=2.9.7; ${cookie}` },
+    ),
+    ...(agent !== undefined ? { agent } : {}),
+  })
+  const text = await res.text()
+  if (text === '') throw new Error(`legacy ${path} returned an empty response`)
+  return {
+    json: JSON.parse(text) as Record<string, unknown>,
+    setCookie: setCookieList(res.headers),
+  }
+}
+
+/**
+ * Retry a blocked weapi call on the legacy transport.
+ * @returns the legacy answer, or undefined when this path has no legacy form.
+ */
+async function legacyFallback(
+  path: string,
+  data: unknown,
+  cookie: string,
+): Promise<{ json: unknown; setCookie: string[] } | undefined> {
+  const d = (data ?? {}) as Record<string, unknown>
+  if (path === '/weapi/login/qrcode/unikey') {
+    const { json } = await legacyJson('/api/login/qrcode/unikey?type=1', '')
+    const unikey = (json as { unikey?: unknown }).unikey
+    if (typeof unikey !== 'string' || unikey === '') return undefined
+    return { json: { code: 200, unikey }, setCookie: [] }
+  }
+  if (path === '/weapi/login/qrcode/client/login') {
+    const key = String(d.key ?? '')
+    if (key === '') return undefined
+    const { json, setCookie } = await legacyJson(
+      `/api/login/qrcode/client/login?key=${encodeURIComponent(key)}&type=1`,
+      '',
+    )
+    // A confirmed scan carries the session either as Set-Cookie headers (the
+    // official endpoint) or as a `cookie` field in the body (the
+    // NeteaseCloudMusicApi shape). Accept both: missing it means the scan is
+    // never persisted and the UI can never see the login.
+    const bodyCookie = (json as { cookie?: unknown }).cookie
+    const extra = typeof bodyCookie === 'string' && bodyCookie !== ''
+      ? bodyCookie
+          .split(';')
+          .map((pair) => pair.trim())
+          .filter((pair) => pair.includes('=')
+            && !/^(path|domain|expires|max-age|httponly|secure|samesite)=/i.test(pair))
+      : []
+    return { json, setCookie: [...setCookie, ...extra] }
+  }
+  if (path === '/weapi/w/nuser/account/get') {
+    const { json } = await legacyJson('/api/nuser/account/get', cookie)
+    return { json, setCookie: [] }
+  }
+  // Catalog calls are the ones a signed-in user hits immediately, and they are
+  // blocked on the encrypted path just like login is.
+  if (path === '/weapi/user/playlist') {
+    const uid = Number(d.uid ?? 0)
+    if (uid === 0) return undefined
+    const limit = Number(d.limit ?? 60)
+    const offset = Number(d.offset ?? 0)
+    const { json } = await legacyJson(
+      `/api/user/playlist?uid=${uid}&limit=${limit}&offset=${offset}&includeVideo=true`,
+      cookie,
+    )
+    return { json, setCookie: [] }
+  }
+  if (path === '/weapi/v6/playlist/detail') {
+    const id = Number(d.id ?? 0)
+    if (id === 0) return undefined
+    // the v6 plain endpoint already answers with ar/al/dt, so it passes through
+    const { json } = await legacyJson(`/api/v6/playlist/detail?id=${id}&n=1000&s=8`, cookie)
+    return { json, setCookie: [] }
+  }
+  if (path === '/weapi/v1/discovery/recommend/songs') {
+    const { json } = await legacyJson('/api/v1/discovery/recommend/songs', cookie)
+    const dailySongs = ((json as { data?: { dailySongs?: unknown[] } }).data?.dailySongs ?? [])
+      .map(normalizeLegacySong)
+    return { json: { code: 200, data: { dailySongs } }, setCookie: [] }
+  }
+  if (path === '/weapi/song/enhance/player/url') {
+    const ids = Array.isArray(d.ids) ? d.ids : []
+    const id = Number(ids[0] ?? 0)
+    if (id === 0) return undefined
+    const br = Number(d.br ?? 320000)
+    const { json } = await legacyJson(
+      `/api/song/enhance/player/url?ids=%5B${id}%5D&br=${br}`,
+      cookie,
+    )
+    return { json, setCookie: [] }
+  }
+  return undefined
+}
+
+/**
+ * The classic daily-recommend answer still uses pre-v6 field names while the
+ * client half reads the v6 ones; map them here so only one side knows about the
+ * difference.
+ */
+function normalizeLegacySong(raw: unknown): Record<string, unknown> {
+  const song = (raw ?? {}) as Record<string, unknown> & {
+    artists?: Array<{ name?: string }>
+    album?: { name?: string; picUrl?: string }
+    duration?: number
+  }
+  return {
+    ...song,
+    ar: song.ar ?? (song.artists ?? []).map((artist) => ({ name: artist.name })),
+    al: song.al ?? { name: song.album?.name, picUrl: song.album?.picUrl },
+    dt: song.dt ?? song.duration,
+  }
+}
+
 function normalizeSetCookiePair(raw: string): string[] {
   return raw
     .split(';')
@@ -299,19 +497,21 @@ async function weapiRequest(path: string, data: unknown, cookie: string): Promis
   const agent = agentFor(proxy)
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: {
+    headers: neteaseHeaders({
       'content-type': 'application/x-www-form-urlencoded',
-        'referer': 'https://music.163.com/',
-      'user-agent': NETBASE_UA,
       ...(requestCookie !== ''
-          ? { cookie: `os=pc; appver=2.9.7; ${requestCookie}` }
-          : { cookie: 'os=pc; appver=2.9.7' }),
-    },
+        ? { cookie: `os=pc; appver=2.9.7; ${requestCookie}` }
+        : { cookie: 'os=pc; appver=2.9.7' }),
+    }),
     body: form,
     ...(agent !== undefined ? { agent } : {}),
   })
   const text = await res.text()
   if (text === '') {
+    // The edge answered instead of the application: retry the legacy plain
+    // transport before reporting the network as unreachable.
+    const fallback = await legacyFallback(path, data, cookie)
+    if (fallback !== undefined) return fallback
     throw new Error('netease weapi unreachable from this network (empty response)')
   }
   const json = JSON.parse(text) as unknown
@@ -327,10 +527,9 @@ async function publicLyric(id: string): Promise<{ lrc?: string }> {
     ? `${apiBase}/lyric?id=${encodeURIComponent(id)}`
     : `${API_BASE}/api/song/lyric?id=${encodeURIComponent(id)}&lv=1&kv=1&tv=-1`
   const res = await fetch(url, {
-    headers: {
-      'user-agent': NETBASE_UA,
-      ...(apiBase !== '' && readCookie() !== '' ? { cookie: readCookie() } : {}),
-    },
+    headers: neteaseHeaders(
+      apiBase !== '' && readCookie() !== '' ? { cookie: readCookie() } : {},
+    ),
     ...(agent !== undefined ? { agent } : {}),
   })
   const json = await res.json().catch(() => ({})) as { lrc?: { lyric?: string } }
@@ -342,10 +541,7 @@ async function publicJson(path: string): Promise<unknown> {
   const proxy = readProxy()
   const agent = agentFor(proxy)
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'user-agent': NETBASE_UA,
-      referer: 'https://music.163.com/',
-    },
+    headers: neteaseHeaders(),
     ...(agent !== undefined ? { agent } : {}),
   })
   return res.json().catch(() => ({ code: -1 }))
@@ -554,7 +750,7 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
         const agent = agentFor(proxy)
         const redirect = await fetch(
           `https://music.163.com/song/media/outer/url?id=${encodeURIComponent(id)}.mp3`,
-          { redirect: 'manual', ...(agent !== undefined ? { agent } : {}) },
+          { redirect: 'manual', headers: neteaseHeaders(), ...(agent !== undefined ? { agent } : {}) },
         )
         const location = redirect.headers.get('location')
         // only hand out real CDN streams; copyright-restricted songs redirect
@@ -578,11 +774,21 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
       }
       try {
         const { json } = await weapiRequest('/weapi/w/nuser/account/get', {}, cookie)
-        const profile = (json as { profile?: { nickname?: string; avatarUrl?: string; userId?: number } })
+        // the legacy transport answers `"profile": null` when anonymous, so a
+        // missing key and a null one both mean "not signed in"
+        const profile = (json as { profile?: { nickname?: string; avatarUrl?: string; userId?: number } | null })
           .profile
-        if (profile === undefined) {
-          clearCookie()
-          sendJson(res, 200, { loggedIn: false })
+        if (profile === undefined || profile === null) {
+          const verdict = upstreamVerdict(json)
+          // A challenged answer is not a dead session: keep the cookie so the
+          // user does not have to paste it again after risk control passes.
+          if (!verdict.risk) clearCookie()
+          sendJson(res, 200, {
+            loggedIn: false,
+            reason: verdict.risk ? 'risk' : 'cookie',
+            code: verdict.code,
+            message: verdict.message,
+          })
           return
         }
         sendJson(res, 200, {
@@ -591,8 +797,12 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
           nickname: profile.nickname,
           avatarUrl: profile.avatarUrl,
         })
-      } catch {
-        sendJson(res, 200, { loggedIn: false })
+      } catch (err) {
+        sendJson(res, 200, {
+          loggedIn: false,
+          reason: 'network',
+          message: err instanceof Error ? err.message : String(err),
+        })
       }
     },
   }))
@@ -621,18 +831,104 @@ export function registerNeteaseRoutes(host: NeteaseRoutesHost): Array<() => void
           sendText(res, 400, 'cookie looks empty')
           return
         }
+        // MUSIC_U is the session itself. Without it the paste is site
+        // decoration — `document.cookie` cannot even see MUSIC_U, because it is
+        // HttpOnly — so say that instead of reporting a rejected login.
+        if (!/(?:^|;\s*)MUSIC_U=/.test(cookie)) {
+          sendJson(res, 200, { ok: false, reason: 'no-session' })
+          return
+        }
         writeCookie(cookie)
         const { json } = await weapiRequest('/weapi/w/nuser/account/get', {}, cookie)
-        const profile = (json as { profile?: { nickname?: string; userId?: number } }).profile
-        if (profile === undefined) {
+        const profile = (json as { profile?: { nickname?: string; userId?: number } | null }).profile
+        if (profile === undefined || profile === null) {
+          const verdict = upstreamVerdict(json)
+          if (verdict.risk) {
+            // keep the pasted cookie: risk control blocked the *check*, not the
+            // session, so a retry from another network can still use it
+            sendJson(res, 200, {
+              ok: false,
+              reason: 'risk',
+              code: verdict.code,
+              message: verdict.message,
+            })
+            return
+          }
           clearCookie()
-          sendJson(res, 200, { ok: false, reason: 'cookie rejected' })
+          sendJson(res, 200, { ok: false, reason: 'cookie' })
           return
         }
         sendJson(res, 200, { ok: true, nickname: profile.nickname, uid: profile.userId })
       } catch (err) {
         sendText(res, 502, err instanceof Error ? err.message : 'cookie login failed')
       }
+    },
+  }))
+
+  // Login diagnosis: answers "is this risk control, a dead cookie, or a broken
+  // network?" with the upstream's own code and message instead of a guess. The
+  // QR probe matters most — when risk control blocks logins, the unikey call is
+  // usually the first one to stop handing out keys.
+  disposers.push(host.register({
+    kind: 'exact',
+    path: '/netease/diag',
+    handler: async (_req, res) => {
+      const cookie = readCookie()
+      const report: Record<string, unknown> = {
+        proxy: readProxy(),
+        apiBase: readApiBase(),
+        realIp: readRealIp(),
+        hasCookie: cookie !== '',
+        cookieNames: cookie === ''
+          ? []
+          : cookie.split('; ').map((pair) => pair.split('=')[0] ?? '').filter((name) => name !== ''),
+        official: null,
+        qrKey: null,
+        legacy: null,
+      }
+      try {
+        const { json } = await weapiRequest('/weapi/w/nuser/account/get', {}, cookie)
+        const verdict = upstreamVerdict(json)
+        report.official = {
+          reachable: true,
+          code: verdict.code,
+          message: verdict.message,
+          risk: verdict.risk,
+          loggedIn: ((json as { profile?: unknown }).profile ?? null) !== null,
+        }
+      } catch (err) {
+        report.official = {
+          reachable: false,
+          error: err instanceof Error ? err.message : String(err),
+        }
+      }
+      try {
+        const { json } = await weapiRequest('/weapi/login/qrcode/unikey', { type: 1 }, '')
+        const verdict = upstreamVerdict(json)
+        const key = (json as { unikey?: unknown }).unikey
+        report.qrKey = {
+          ok: typeof key === 'string' && key !== '',
+          code: verdict.code,
+          message: verdict.message,
+        }
+      } catch (err) {
+        report.qrKey = { ok: false, error: err instanceof Error ? err.message : String(err) }
+      }
+      // the plain transport is the fallback the QR flow uses when the encrypted
+      // path is refused, so report whether it hands out a key too
+      try {
+        const { json } = await legacyJson('/api/login/qrcode/unikey?type=1', '')
+        const verdict = upstreamVerdict(json)
+        const key = (json as { unikey?: unknown }).unikey
+        report.legacy = {
+          ok: typeof key === 'string' && key !== '',
+          code: verdict.code,
+          message: verdict.message,
+        }
+      } catch (err) {
+        report.legacy = { ok: false, error: err instanceof Error ? err.message : String(err) }
+      }
+      sendJson(res, 200, report)
     },
   }))
 

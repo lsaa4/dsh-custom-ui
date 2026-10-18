@@ -5,6 +5,11 @@ export interface NeteaseAccount {
   uid?: number
   nickname?: string
   avatarUrl?: string
+  /** Why a logged-out answer came back: `risk` = challenged, `cookie` = dead, `network` = unreachable. */
+  reason?: 'risk' | 'cookie' | 'network'
+  /** Upstream weapi code, when it answered at all. */
+  code?: number | null
+  message?: string | null
 }
 
 export interface NeteaseSong {
@@ -70,22 +75,48 @@ const COOKIE_NAME_RES = [
   /^__csrf/,
 ].sort((a, b) => b.source.length - a.source.length)
 
-const STANDARD_COOKIE_RE = /^(?:[^=;\s]+=[^;]*)(?:\s*;\s*[^=;\s]+=[^;]*)*$/
+const PAIR_RE = /^([A-Za-z0-9_.-]+)=(.*)$/
+/** The session cookie a login actually needs; everything else is decoration. */
+const SESSION_COOKIE_RE = /(?:^|;\s*)MUSIC_U=/
 
-export function normalizeCookiePaste(raw: string): string {
-  const trimmed = raw.trim()
-  if (trimmed === '') return ''
-  if (STANDARD_COOKIE_RE.test(trimmed)) return trimmed
-  const lines = trimmed
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.includes('=') && !l.startsWith(';'))
-  if (lines.length > 1 && lines.every((l) => /^[^=;\s]+=[^;]*$/.test(l))) {
-    return lines.join('; ')
+/** True when the pasted session carries a real login (MUSIC_U is HttpOnly). */
+export function hasSessionCookie(normalized: string): boolean {
+  return SESSION_COOKIE_RE.test(normalized)
+}
+
+/** Keep the last value for a repeated name, in first-seen order. */
+function dedupePairs(pairs: readonly string[]): string {
+  const seen = new Map<string, string>()
+  for (const pair of pairs) {
+    const m = PAIR_RE.exec(pair)
+    if (m === null) continue
+    const [, name, value] = m
+    if (name === undefined || value === undefined || value.trim() === '') continue
+    seen.set(name, `${name}=${value.trim()}`)
   }
+  return [...seen.values()].join('; ')
+}
+
+/** DevTools copies its cookie table as tab-separated rows: name, value, domain… */
+function pairsFromTable(text: string): string[] {
+  const out: string[] = []
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.includes('\t')) continue
+    const [name, value] = line.split('\t').map((column) => column.trim())
+    if (name === undefined || value === undefined || value === '') continue
+    if (!/^[A-Za-z0-9_.-]+$/.test(name)) continue
+    // a select-all copy starts with the table header
+    if (name === 'Name' && value === 'Value') continue
+    out.push(`${name}=${value}`)
+  }
+  return out
+}
+
+/** Pull known cookie names out of text that has no usable separators. */
+function salvagePairs(text: string): string[] {
   const unanchored = COOKIE_NAME_RES.map((re) => new RegExp(re.source.replace(/^\^/, '')))
   const parts: string[] = []
-  let rest = trimmed
+  let rest = text
   while (rest.length > 0) {
     let name: string | null = null
     for (const re of COOKIE_NAME_RES) {
@@ -96,29 +127,112 @@ export function normalizeCookiePaste(raw: string): string {
       }
     }
     if (name === null) break // unrecognized tail — stop, keep what we have
-    rest = rest.slice(name.length)
+    rest = rest.slice(name.length).replace(/^[=\s]+/, '')
     let end = rest.length
     for (const re of unanchored) {
       const idx = rest.search(re)
       if (idx !== -1 && idx < end) end = idx
     }
-    parts.push(`${name}=${rest.slice(0, end)}`)
+    const value = rest.slice(0, end).replace(/[;\s]+$/, '')
+    if (value !== '') parts.push(`${name}=${value}`)
     rest = rest.slice(end)
   }
-  return parts.join('; ')
+  return parts
+}
+
+/**
+ * Turn whatever the user copied into a `name=value; …` session string.
+ *
+ * `MUSIC_U` is HttpOnly, so `document.cookie` never contains it and the shapes
+ * people really paste are: a header/curl fragment, the DevTools cookie table
+ * (tab separated), a multi-line list, or an ordinary `a=1; b=2` string. All of
+ * them end up here, and a value with a trailing separator silently breaks the
+ * session, so each shape is parsed explicitly rather than by one loose regex.
+ */
+export function normalizeCookiePaste(raw: string): string {
+  let text = raw.trim()
+  if (text === '') return ''
+
+  // header / curl paste: keep what follows the last `Cookie:` and unwrap quotes
+  const headerAt = text.lastIndexOf('Cookie:')
+  if (headerAt >= 0) text = text.slice(headerAt + 'Cookie:'.length)
+  text = text.replace(/^['"]+|['"]+$/g, '').trim()
+  if (text === '') return ''
+
+  const table = pairsFromTable(text)
+  if (table.length > 0) return dedupePairs(table)
+
+  const pairs = text
+    .split(/[;\r\n]+/)
+    .map((token) => token.trim())
+    .filter((token) => token !== '')
+    .map((token) => {
+      const m = PAIR_RE.exec(token)
+      if (m === null) return null
+      const [, name, value] = m
+      return name === undefined || value === undefined ? null : `${name}=${value.trim()}`
+    })
+    .filter((pair): pair is string => pair !== null)
+  if (pairs.length > 0) return dedupePairs(pairs)
+
+  return dedupePairs(salvagePairs(text))
 }
 
 /** Login by pasting a music.163.com session cookie (works when QR is blocked). */
 export async function submitCookie(
   cookie: string,
-): Promise<{ ok: boolean; nickname?: string; uid?: number; reason?: string }> {
+): Promise<{
+  ok: boolean
+  nickname?: string
+  uid?: number
+  reason?: 'cookie' | 'risk' | 'no-session'
+  code?: number | null
+  message?: string | null
+}> {
   const res = await fetch('/netease/cookie', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ cookie }),
   })
   if (!res.ok) throw new Error(`cookie login: HTTP ${res.status}`)
-  return (await res.json()) as { ok: boolean; nickname?: string; uid?: number; reason?: string }
+  return (await res.json()) as {
+    ok: boolean
+    nickname?: string
+    uid?: number
+    reason?: 'cookie' | 'risk' | 'no-session'
+    code?: number | null
+    message?: string | null
+  }
+}
+
+export interface NeteaseDiagnostics {
+  proxy: string
+  apiBase: string
+  realIp: string
+  hasCookie: boolean
+  cookieNames: string[]
+  official: {
+    reachable: boolean
+    code?: number | null
+    message?: string | null
+    risk?: boolean
+    loggedIn?: boolean
+    error?: string
+  } | null
+  qrKey: { ok: boolean; code?: number | null; message?: string | null; error?: string } | null
+}
+
+/**
+ * Ask the host what the upstream actually replied.
+ *
+ * Risk control, an expired cookie and an unreachable network all surface as
+ * "login failed" in the UI; this returns the upstream's own code and message
+ * (plus the headers being sent) so the cause is visible.
+ */
+export async function getDiagnostics(): Promise<NeteaseDiagnostics> {
+  const res = await fetch('/netease/diag', { cache: 'no-store' })
+  if (!res.ok) throw new Error(`diagnostics: HTTP ${res.status}`)
+  return (await res.json()) as NeteaseDiagnostics
 }
 
 export interface QrKeyResult {

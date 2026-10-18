@@ -29,6 +29,37 @@
   --glass-anim-level: soft;    /* none | soft | strong */
   --glass-surface-light: rgba(255, 255, 255, 0.72);
   --glass-surface-dark: rgba(16, 16, 24, 0.72);
+  /* hover plates: the surface a step more solid, so hover stays legible */
+  --glass-hover-light: rgba(255, 255, 255, 0.84);
+  --glass-hover-dark: rgba(16, 16, 24, 0.84);
+  /* text-bearing surfaces (code blocks, message bubble, button faces): more
+     body than a panel, so what shows through cannot compete with the label */
+  --glass-solid-light: rgba(255, 255, 255, 0.88);
+  --glass-solid-dark: rgba(16, 16, 24, 0.88);
+  /* dialogs and the raised layer family — same knob, separate family so the two
+     can diverge later without touching call sites */
+  --glass-panel-light: rgba(255, 255, 255, 0.88);
+  --glass-panel-dark: rgba(16, 16, 24, 0.88);
+}
+
+/* ---- Windows Desktop caption (minimize / maximize / close) ----
+ *
+ * The Desktop preload paints the native caption with a color it samples from
+ * --dsw-specific-sidebar-fill through an off-screen probe <span>. Overriding
+ * that token does reach the caption, but the caption is composited *on top of*
+ * the page: a translucent color doubles up with the glass surface underneath
+ * and reads as a milky opaque bar instead of glass.
+ *
+ * Neutralizing the probe's own background makes the preload report a fully
+ * transparent caption, so the page's glass and wallpaper show through. This is
+ * a supported platform path — the shipped welcome window already creates its
+ * caption with color "#00000000" plus backgroundMaterial "acrylic". The probe
+ * is matched by the token reference in its inline style; if a future DSH stops
+ * writing that, the rule stops matching and the caption falls back to the
+ * token-derived color (today's behavior).
+ */
+html[data-windows-titlebar] body > span[style*="var(--dsw-specific-sidebar-fill)"] {
+  background-color: rgba(0, 0, 0, 0) !important;
 }
 
 /* ---- custom font (uploaded @font-face source is injected by JS) ---- */
@@ -38,6 +69,30 @@ body.dsh-glass-on input,
 body.dsh-glass-on select,
 body.dsh-glass-on textarea {
   font-family: var(--glass-font);
+}
+
+/* ---- UI text weight ----
+ *
+ * Opt-in through a body attribute: without it every element keeps the weight
+ * the app gave it (a blanket `font-weight: normal` would flatten the design's
+ * own medium labels). The app ships no element-level weight rules — it styles
+ * everything through hashed module classes — so the selector is a broad
+ * `:is()` list whose specificity (attribute + element) outranks a single class
+ * rule, which is what lets one setting reach the whole UI.
+ *
+ * Headings and <strong> are deliberately left out: they are already heavy, and
+ * pulling them down to the chosen weight would remove emphasis instead of
+ * restoring legibility.
+ */
+body[data-glass-weight] {
+  font-weight: var(--glass-font-weight, 400);
+}
+
+body[data-glass-weight] :is(
+  p, span, div, li, dd, dt, label, blockquote, figcaption, td, th, a,
+  button, input, select, textarea, [role="button"]
+) {
+  font-weight: var(--glass-font-weight, 400);
 }
 
 /* ---- background layer: always fullscreen ---- */
@@ -176,25 +231,66 @@ body.dsh-glass-anim-none #dsh-glass-bg video { transition: none !important; }
   body.dsh-glass-anim-strong #dsh-glass-bg video { transition: none; }
 }
 
-/* ---- compact music player card below the session-log button ---- */
+/* ---- composer dock row: stats pills, lyric line, context meter ----
+ *
+ * DSH ships this row with no background at all, so the output-speed / cache
+ * readouts, the session-stats trigger and the context-usage ring all draw
+ * their dimmed labels straight onto the wallpaper. A frosted plate gives that
+ * text a backing without turning the row opaque.
+ *
+ * The class is applied by dockPlate.ts (the row's own class name is hashed per
+ * build). No backdrop-filter here on purpose: the context meter opens a
+ * `position: fixed` detail panel from inside this row, and a containing block
+ * would misplace it — the wallpaper behind the row is already blurred by the
+ * background layer, so the plate still reads as frosted.
+ */
+body.dsh-glass-on .dsh-glass-dock {
+  background: var(--glass-solid-light);
+  border-radius: var(--dsw-radius-md, 10px);
+  padding: 2px 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+body[data-ds-dark-theme].dsh-glass-on .dsh-glass-dock {
+  background: var(--glass-solid-dark);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.28);
+}
+
+/* ---- now-playing pill, inline in the composer dock row ----
+ *
+ * It used to be a fixed card pinned over the session list, which covered the
+ * list. The dock row already carries everything else about the current turn
+ * (stats, lyric line, context meter), so the player belongs there too: inline,
+ * out of the content area, and only as wide as its controls need.
+ */
 .dsh-glass-music-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 180px;
+  position: relative;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  max-width: 40vw;
   margin: 0;
-  padding: 8px;
-  border: 1px solid rgba(127, 127, 127, 0.2);
-  border-radius: 12px;
-  background: rgba(127, 127, 127, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 2px 10px 2px 4px;
+  border: 0.5px solid rgba(127, 127, 127, 0.18);
+  border-radius: 999px;
+  background: var(--glass-hover-light);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+  vertical-align: middle;
+}
+
+body[data-ds-dark-theme] .dsh-glass-music-controls {
+  background: var(--glass-hover-dark);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.28);
 }
 
 .dsh-glass-music-cover {
   position: relative;
-  width: 100%;
+  flex: none;
+  width: 22px;
+  height: 22px;
   aspect-ratio: 1 / 1;
-  border-radius: 8px;
+  border-radius: 50%;
   overflow: hidden;
   background: rgba(127, 127, 127, 0.12);
 }
@@ -212,35 +308,45 @@ body.dsh-glass-anim-none #dsh-glass-bg video { transition: none !important; }
   justify-content: center;
   width: 100%;
   height: 100%;
-  font-size: 32px;
+  font-size: 13px;
   color: rgba(127, 127, 127, 0.7);
+}
+
+/* shown only when the dock's lyric line is hidden */
+.dsh-glass-music-title {
+  min-width: 0;
+  max-width: 12em;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dsh-glass-music-progress {
   display: flex;
+  flex: none;
   flex-direction: column;
   gap: 2px;
+  width: 72px;
 }
 
 .dsh-glass-music-progress input[type="range"] {
   width: 100%;
-  height: 4px;
+  height: 3px;
   accent-color: var(--dsw-alias-brand-primary, #4176e6);
 }
 
+/* the clock readout is redundant in a pill this size — the tooltip has it */
 .dsh-glass-music-times {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  opacity: 0.7;
+  display: none;
 }
 
 .dsh-glass-music-buttons {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 2px;
+  flex-wrap: nowrap;
 }
 
 .dsh-glass-music-controls button {
@@ -268,20 +374,39 @@ body.dsh-glass-anim-none #dsh-glass-bg video { transition: none !important; }
   cursor: default;
 }
 
+/* Volume is a rarely-touched knob, so it stays out of the row until wanted —
+ * and it opens as a popover above the pill rather than inline, because
+ * revealing it inline would widen the pill and shove the stats and the context
+ * meter sideways every time the pointer crossed the player.
+ */
 .dsh-glass-volume {
-  display: inline-flex;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  display: none;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 0.5px solid rgba(127, 127, 127, 0.18);
+  border-radius: 999px;
+  background: var(--glass-solid-light);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   font-size: 11px;
+  white-space: nowrap;
+}
+
+body[data-ds-dark-theme] .dsh-glass-volume {
+  background: var(--glass-solid-dark);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.32);
+}
+
+.dsh-glass-music-controls:hover .dsh-glass-volume,
+.dsh-glass-music-controls:focus-within .dsh-glass-volume {
+  display: inline-flex;
 }
 
 .dsh-glass-volume input[type="range"] {
-  width: 48px;
+  width: 56px;
   height: 3px;
   accent-color: var(--dsw-alias-brand-primary, #4176e6);
-}
-
-.dsh-glass-music-controls--fixed {
-  position: fixed;
-  z-index: 1000;
 }

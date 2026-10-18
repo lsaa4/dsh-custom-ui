@@ -17,6 +17,9 @@ export const CUSTOM_FONT_FAMILY = 'GlassCustomFont'
 const SURFACE_LIGHT = '255, 255, 255'
 const SURFACE_DARK = '16, 16, 24'
 
+/** How much more solid a hover plate is than the resting surface it sits on. */
+const HOVER_DELTA = 0.12
+
 export class GlassEngine {
   private disposers: Array<() => void> = []
   private applied = false
@@ -59,8 +62,30 @@ export class GlassEngine {
     root.style.setProperty('--glass-anim-level', config.animLevel)
     root.style.setProperty('--glass-surface-light', `rgba(${SURFACE_LIGHT}, ${config.opacity})`)
     root.style.setProperty('--glass-surface-dark', `rgba(${SURFACE_DARK}, ${config.opacity})`)
+    // hover plates are derived, not configured: one step more solid than the
+    // surface, clamped so a near-opaque slider value cannot overflow alpha
+    const hover = Math.min(1, config.opacity + HOVER_DELTA)
+    root.style.setProperty('--glass-hover-light', `rgba(${SURFACE_LIGHT}, ${hover})`)
+    root.style.setProperty('--glass-hover-dark', `rgba(${SURFACE_DARK}, ${hover})`)
+    // Text-bearing surfaces follow their own knob so legibility can be raised
+    // without making the background glass opaque: solid = code, bubble, inputs,
+    // buttons; panel = dialogs and the raised layer family.
+    const content = Math.min(1, Math.max(0, config.contentOpacity))
+    root.style.setProperty('--glass-solid-light', `rgba(${SURFACE_LIGHT}, ${content})`)
+    root.style.setProperty('--glass-solid-dark', `rgba(${SURFACE_DARK}, ${content})`)
+    root.style.setProperty('--glass-panel-light', `rgba(${SURFACE_LIGHT}, ${content})`)
+    root.style.setProperty('--glass-panel-dark', `rgba(${SURFACE_DARK}, ${content})`)
 
     const body = document.body
+    // Font weight is opt-in: without the attribute every element keeps the
+    // weight the app gave it.
+    if (config.fontWeight > 0) {
+      root.style.setProperty('--glass-font-weight', String(config.fontWeight))
+      body.dataset.glassWeight = String(config.fontWeight)
+    } else {
+      root.style.removeProperty('--glass-font-weight')
+      delete body.dataset.glassWeight
+    }
     body.classList.add('dsh-glass-on')
     body.dataset.glassFit = config.bgFit
     body.classList.toggle('dsh-glass-anim-soft', config.animLevel === 'soft')
@@ -308,6 +333,10 @@ export class GlassEngine {
       '--glass-bg-type', '--glass-bg-image', '--glass-bg-video', '--glass-bg-mask',
       '--glass-bg-fit', '--glass-anim-level',
       '--glass-surface-light', '--glass-surface-dark',
+      '--glass-hover-light', '--glass-hover-dark',
+      '--glass-solid-light', '--glass-solid-dark',
+      '--glass-panel-light', '--glass-panel-dark',
+      '--glass-font-weight',
     ]) {
       root.style.removeProperty(name)
     }
@@ -320,6 +349,7 @@ export class GlassEngine {
       'dsh-glass-ready',
     )
     delete body.dataset.glassFit
+    delete body.dataset.glassWeight
     this.imgA = null
     this.imgB = null
     this.currentVideo = null

@@ -7,6 +7,8 @@ import {
   fetchPlaylistTracks,
   fetchPlaylists,
   getAccount,
+  getDiagnostics,
+  hasSessionCookie,
   logout,
   pollQrLogin,
   requestQrKey,
@@ -14,8 +16,10 @@ import {
   submitCookie,
   normalizeCookiePaste,
   type NeteaseAccount,
+  type NeteaseDiagnostics,
   type NeteasePlaylist,
   type NeteaseSong,
+  type QrStatus,
 } from './netease.ts'
 import { playback, type LyricPos } from './lyrics.ts'
 import type { Translate } from './locales.ts'
@@ -31,6 +35,8 @@ export interface NeteasePanelProps {
   onNeteaseProxy: (proxy: string) => void
   neteaseApiBase: string
   onNeteaseApiBase: (base: string) => void
+  neteaseRealIp: string
+  onNeteaseRealIp: (ip: string) => void
 }
 
 const LYRIC_POSITIONS: ReadonlyArray<{ id: LyricPos; labelKey: string }> = [
@@ -39,13 +45,18 @@ const LYRIC_POSITIONS: ReadonlyArray<{ id: LyricPos; labelKey: string }> = [
   { id: 'hidden', labelKey: 'lyricPosHidden' },
 ]
 
+/** Where a pending QR login is remembered across settings-panel unmounts. */
+const QR_STORE = 'dsh-glass-ui:netease-qr'
+/** Older than this a key is not worth resuming — the code has expired anyway. */
+const QR_TTL_MS = 3 * 60 * 1000
+
 function fmtTime(ms: number | undefined): string {
   if (ms === undefined || !Number.isFinite(ms)) return ''
   const s = Math.floor(ms / 1000)
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase }: NeteasePanelProps): JSX.Element {
+export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDisplay, neteaseProxy, onNeteaseProxy, neteaseApiBase, onNeteaseApiBase, neteaseRealIp, onNeteaseRealIp }: NeteasePanelProps): JSX.Element {
   const [account, setAccount] = useState<NeteaseAccount | null | 'loading'>('loading')
   const [qrKey, setQrKey] = useState<string | null>(null)
   const [qrImg, setQrImg] = useState<string | null>(null)
@@ -62,6 +73,10 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
   const [busy, setBusy] = useState(false)
   const [cookieInput, setCookieInput] = useState('')
   const [toast, setToast] = useState<string | null>(null)
+  const [diag, setDiag] = useState<NeteaseDiagnostics | null>(null)
+  const [diagBusy, setDiagBusy] = useState(false)
+  /** Last QR status code the poll saw, so a stalled login is visible. */
+  const [qrLastCode, setQrLastCode] = useState<number | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const pollTimer = useRef<number | undefined>(undefined)
         const mountedRef = useRef(true)
@@ -111,6 +126,77 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
     setPolling(false)
   }
 
+  /** Remember the pending key so closing the settings panel does not lose the login. */
+  function rememberQr(key: string): void {
+    try {
+      window.sessionStorage.setItem(QR_STORE, JSON.stringify({ key, at: Date.now() }))
+    } catch {
+      /* storage may be unavailable — the in-memory poll still runs */
+    }
+  }
+
+  function forgetQr(): void {
+    try {
+      window.sessionStorage.removeItem(QR_STORE)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /**
+   * Draw the QR code once the canvas is actually in the document.
+   *
+   * The canvas only renders when `qrKey` is set, so drawing it from inside
+   * startQrLogin() read `canvasRef.current === null` (state updates are not
+   * flushed mid-handler) and the login box stayed blank forever. Keyed on the
+   * key so a regenerated code is redrawn too, and skipped when the server
+   * already returned a ready-made image.
+   */
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (canvas === null || qrKey === null || qrImg !== null) return
+    let cancelled = false
+    void QRCode
+      .toCanvas(canvas, `https://music.163.com/login?codekey=${qrKey}`, { width: 168, margin: 1 })
+      .catch((error: unknown) => {
+        if (!cancelled && mountedRef.current) {
+          setToast(t('lyricQrFail', { error: error instanceof Error ? error.message : String(error) }))
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [qrKey, qrImg, t])
+
+  /**
+   * Resume a pending QR login after the panel was closed and reopened: the poll
+   * lives in this component, so an unmount used to abandon a code the user had
+   * already scanned.
+   */
+  useEffect(() => {
+    let raw: string | null = null
+    try {
+      raw = window.sessionStorage.getItem(QR_STORE)
+    } catch {
+      return
+    }
+    if (raw === null) return
+    try {
+      const parsed = JSON.parse(raw) as { key?: unknown; at?: unknown }
+      if (typeof parsed.key !== 'string' || parsed.key === '' || typeof parsed.at !== 'number') return
+      if (Date.now() - parsed.at > QR_TTL_MS) {
+        forgetQr()
+        return
+      }
+      setQrKey(parsed.key)
+      setQrState(t('lyricQrScan'))
+      scheduleQrPoll(parsed.key)
+    } catch {
+      /* malformed state — nothing to resume */
+    }
+    // deliberately once per mount: later changes are driven by the poll itself
+  }, [])
+
   async function fetchAccountAfterLogin(): Promise<NeteaseAccount> {
     // The session cookie may need a moment to propagate on the remote API side.
     for (let i = 0; i < 5; i++) {
@@ -121,48 +207,101 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
     return getAccount()
   }
 
+  /**
+   * Apply one poll answer. Shared by the timer and the manual check so both
+   * paths land the login identically.
+   */
+  async function applyQrStatus(key: string, status: QrStatus): Promise<void> {
+    if (!mountedRef.current) return
+    setQrLastCode(status.code)
+    if (status.code === 803) {
+      clearQrPoll()
+      forgetQr()
+      setQrKey(null)
+      setAccount({ loggedIn: true, nickname: status.nickname })
+      setToast(t('lyricLoginOk', { name: status.nickname ?? '' }))
+      // Confirm the stored session and pick up the uid so playlists can load;
+      // the optimistic account above keeps the UI signed in either way.
+      const fresh = await fetchAccountAfterLogin()
+      if (!mountedRef.current) return
+      if (fresh.loggedIn) {
+        setAccount(fresh)
+        if (fresh.uid !== undefined) {
+          void fetchPlaylists(fresh.uid).then((list) => {
+            if (mountedRef.current) setPlaylists(list)
+          })
+        }
+      }
+      return
+    }
+    if (status.code === 802) {
+      setQrState(t('lyricQrConfirm'))
+      scheduleQrPoll(key)
+      return
+    }
+    if (status.code === 800) {
+      clearQrPoll()
+      forgetQr()
+      setQrState(t('lyricQrExpired'))
+      return
+    }
+    scheduleQrPoll(key)
+  }
+
   function scheduleQrPoll(key: string): void {
     if (!mountedRef.current) return
     if (pollTimer.current !== undefined) window.clearTimeout(pollTimer.current)
     setPolling(true)
-    pollTimer.current = window.setTimeout(async () => {
+    pollTimer.current = window.setTimeout(() => {
       pollTimer.current = undefined
-      if (!mountedRef.current) return
-      try {
-        const status = await pollQrLogin(key)
+      void (async () => {
         if (!mountedRef.current) return
-        if (status.code === 803) {
-          clearQrPoll()
-          setQrKey(null)
-          const acc: NeteaseAccount = {
-            loggedIn: true,
-            nickname: status.nickname,
-          }
-          setAccount(acc)
-          setToast(t('lyricLoginOk', { name: status.nickname ?? '' }))
-          if (acc.uid === undefined) {
-            const fresh = await fetchAccountAfterLogin()
-            if (!mountedRef.current) return
-            setAccount(fresh.loggedIn ? fresh : acc)
-            if (fresh.uid !== undefined) {
-              void fetchPlaylists(fresh.uid).then((list) => {
-                if (mountedRef.current) setPlaylists(list)
-              })
-            }
-          }
-        } else if (status.code === 802) {
-          setQrState(t('lyricQrConfirm'))
-          scheduleQrPoll(key)
-        } else if (status.code === 800) {
-          clearQrPoll()
-          setQrState(t('lyricQrExpired'))
-        } else {
-          scheduleQrPoll(key)
+        try {
+          await applyQrStatus(key, await pollQrLogin(key))
+        } catch {
+          if (mountedRef.current) scheduleQrPoll(key)
         }
-      } catch {
-        if (mountedRef.current) scheduleQrPoll(key)
-      }
+      })()
     }, 2000)
+  }
+
+  /**
+   * Check the login on demand.
+   *
+   * Polling lives in this component, so closing the settings panel — or letting
+   * the code expire — used to end it silently, and a scan confirmed afterwards
+   * was never noticed. This re-asks both the pending code and the session.
+   */
+  async function checkLogin(): Promise<void> {
+    setBusy(true)
+    try {
+      if (qrKey !== null) {
+        try {
+          await applyQrStatus(qrKey, await pollQrLogin(qrKey))
+          if (account !== null && account !== 'loading' && account.loggedIn) return
+        } catch {
+          /* fall through to the session check */
+        }
+      }
+      if (!mountedRef.current) return
+      const acc = await getAccount()
+      if (!mountedRef.current) return
+      if (acc.loggedIn) {
+        setAccount(acc)
+        setToast(t('lyricLoginOk', { name: acc.nickname ?? '' }))
+        if (acc.uid !== undefined) {
+          void fetchPlaylists(acc.uid).then((list) => {
+            if (mountedRef.current) setPlaylists(list)
+          })
+        }
+      } else {
+        setToast(acc.reason === 'risk'
+          ? t('lyricRiskHint', { code: acc.code ?? '?' })
+          : t('lyricCheckLoginFail'))
+      }
+    } finally {
+      if (mountedRef.current) setBusy(false)
+    }
   }
 
   async function startQrLogin(): Promise<void> {
@@ -179,16 +318,8 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
       if (!mountedRef.current) return
       setQrKey(key)
       setQrImg(qrimg ?? null)
-      if (qrimg === undefined || qrimg === '') {
-        // remote server gave no image — render locally as fallback
-        const canvas = canvasRef.current
-        if (canvas !== null) {
-          await QRCode.toCanvas(canvas, `https://music.163.com/login?codekey=${key}`, {
-            width: 168,
-            margin: 1,
-          })
-        }
-      }
+      rememberQr(key)
+      // the canvas draw happens in the effect above, once the box is mounted
       if (!mountedRef.current) return
       setQrState(t('lyricQrScan'))
       scheduleQrPoll(key)
@@ -264,8 +395,10 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
 
   function cancelQr(): void {
     clearQrPoll()
+    forgetQr()
     setQrKey(null)
     setQrImg(null)
+    setQrLastCode(null)
   }
 
   /*
@@ -279,7 +412,18 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
   async function doCookieLogin(): Promise<void> {
     // tolerate multi-line pastes and missing '=' separators (normalize repairs)
     const cookie = normalizeCookiePaste(cookieInput)
-    if (cookie === '') return
+    if (cookie === '') {
+      // e.g. only the value cell was copied: there is no name to pair it with
+      setToast(t('lyricCookieUnparsed'))
+      return
+    }
+    // MUSIC_U is HttpOnly, so `document.cookie` can never contain it; catching
+    // that here beats sending a session-less string upstream and calling the
+    // answer "cookie rejected".
+    if (!hasSessionCookie(cookie)) {
+      setToast(t('lyricCookieNoSession'))
+      return
+    }
     setBusy(true)
     try {
       const result = await submitCookie(cookie)
@@ -291,6 +435,12 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
         if (acc.uid !== undefined) {
           void fetchPlaylists(acc.uid).then(setPlaylists)
         }
+      } else if (result.reason === 'no-session') {
+        setToast(t('lyricCookieNoSession'))
+      } else if (result.reason === 'risk') {
+        // The check itself was challenged — the cookie may well be valid, so say
+        // what happened instead of claiming the cookie is bad.
+        setToast(t('lyricRiskHint', { code: result.code ?? '?' }))
       } else {
         setToast(t('lyricCookieRejected'))
       }
@@ -298,6 +448,18 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
       setToast(t('lyricCookieFail', { error: err instanceof Error ? err.message : String(err) }))
     } finally {
       setBusy(false)
+    }
+  }
+
+  /** Ask the host what the upstream actually answered (risk control vs dead cookie vs network). */
+  async function runDiagnostics(): Promise<void> {
+    setDiagBusy(true)
+    try {
+      setDiag(await getDiagnostics())
+    } catch (err) {
+      setToast(t('lyricDiagFail', { error: err instanceof Error ? err.message : String(err) }))
+    } finally {
+      setDiagBusy(false)
     }
   }
 
@@ -398,6 +560,26 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
         />
       </div>
 
+      {/* risk control: NetEase decides on the source address before the payload */}
+      <div className={styles.row}>
+        <span className={styles.fieldLabel}>{t('lyricRealIpLabel')}</span>
+        <Input
+          className={styles.grow}
+          value={neteaseRealIp}
+          onChange={(e) => onNeteaseRealIp(e.target.value.trim())}
+        />
+      </div>
+
+      <div className={styles.row}>
+        <Button size="sm" variant="outline" disabled={diagBusy} onClick={() => void runDiagnostics()}>
+          {diagBusy ? t('lyricDiagRunning') : t('lyricDiagButton')}
+        </Button>
+      </div>
+      <p className={styles.hint}>{t('lyricRealIpHint')}</p>
+      {diag !== null ? (
+        <pre className={styles.diagBox}>{JSON.stringify(diag, null, 2)}</pre>
+      ) : null}
+
       <div className={styles.row}>
         <span className={styles.fieldLabel}>{t('lyricPosLabel')}</span>
         <div className={styles.pills}>
@@ -437,22 +619,43 @@ export function NeteasePanel({ t, lyricPos, onLyricPos, mediaDisplay, onMediaDis
       ) : account === null || !account.loggedIn ? (
         <div className={styles.loginBox}>
           {qrKey === null ? (
-            <Button variant="outline" disabled={busy} onClick={() => void startQrLogin()}>
-              {t('lyricQrLogin')}
-            </Button>
+            <div className={styles.pills}>
+              <Button variant="outline" disabled={busy} onClick={() => void startQrLogin()}>
+                {t('lyricQrLogin')}
+              </Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => void checkLogin()}>
+                {t('lyricCheckLogin')}
+              </Button>
+            </div>
           ) : (
             <div className={styles.qrBox}>
               {qrImg !== null ? (
-                <img src={qrImg} width={168} height={168} alt="QR" />
+                // a broken data URL from a remote server must not leave a blank
+                // box: fall back to the locally rendered canvas
+                <img
+                  src={qrImg}
+                  width={168}
+                  height={168}
+                  alt="QR"
+                  onError={() => setQrImg(null)}
+                />
               ) : (
                 <canvas ref={canvasRef} width={168} height={168} />
               )}
               <p className={styles.qrState}>{qrState}</p>
-              {polling && (
-                <Button size="sm" variant="ghost" onClick={cancelQr}>
-                  {t('lyricQrCancel')}
+              {qrLastCode !== null ? (
+                <p className={styles.qrState}>{t('lyricQrLastCode', { code: qrLastCode })}</p>
+              ) : null}
+              <div className={styles.pills}>
+                <Button size="sm" variant="outline" disabled={busy} onClick={() => void checkLogin()}>
+                  {t('lyricCheckLogin')}
                 </Button>
-              )}
+                {polling ? (
+                  <Button size="sm" variant="ghost" onClick={cancelQr}>
+                    {t('lyricQrCancel')}
+                  </Button>
+                ) : null}
+              </div>
             </div>
           )}
 

@@ -48,6 +48,13 @@ export interface GlassConfig {
   opacity: number
   /** backdrop-filter blur radius in px, 4..40. */
   blur: number
+  /**
+   * Solidity of text-bearing surfaces (dialogs, panels, composer card, code
+   * blocks, message bubble); 0.5..1, independent of the background glass.
+   */
+  contentOpacity: number
+  /** UI font weight; 0 leaves every element's own weight alone. */
+  fontWeight: number
   /** Font family applied to the whole UI; '' keeps the built-in font. */
   font: string
   /** Uploaded font file URL (/glass-ui/media/...) for a custom @font-face. */
@@ -80,11 +87,19 @@ export interface GlassConfig {
   neteaseProxy: string
   /** Remote NeteaseCloudMusicApi server base URL (public/self-hosted instance). */
   neteaseApiBase: string
+  /**
+   * `X-Real-IP` / `X-Forwarded-For` sent on NetEase requests. NetEase's edge
+   * challenges datacenter/overseas addresses before reading the payload, which
+   * shows up as a QR login that never confirms; '' sends no such header.
+   */
+  neteaseRealIp: string
 }
 
 export const DEFAULT_CONFIG: GlassConfig = Object.freeze({
   opacity: 0.72,
   blur: 18,
+  contentOpacity: 0.88,
+  fontWeight: 0,
   font: '',
   fontUrl: '',
   bgType: 'none',
@@ -101,6 +116,7 @@ export const DEFAULT_CONFIG: GlassConfig = Object.freeze({
   neteaseProxy: '',
     mediaDisplay: true,
   neteaseApiBase: '',
+  neteaseRealIp: '118.88.88.88',
 })
 
 // ---------------------------------------------------------------------------
@@ -328,6 +344,12 @@ export function apply(ctx: HostContext): void {
             const merged = { ...DEFAULT_CONFIG, ...parsed } as GlassConfig
             merged.opacity = clampNumber(merged.opacity, 0.1, 0.95, DEFAULT_CONFIG.opacity)
             merged.blur = clampNumber(merged.blur, 4, 40, DEFAULT_CONFIG.blur)
+            merged.contentOpacity = clampNumber(
+              merged.contentOpacity, 0.5, 1, DEFAULT_CONFIG.contentOpacity,
+            )
+            merged.fontWeight = [0, 300, 400, 500, 600, 700].includes(merged.fontWeight)
+              ? merged.fontWeight
+              : DEFAULT_CONFIG.fontWeight
             merged.bgType = ['none', 'image', 'video'].includes(merged.bgType) ? merged.bgType : 'none'
             merged.font = String(merged.font ?? '').slice(0, 200)
             merged.fontUrl = String(merged.fontUrl ?? '').slice(0, 500)
@@ -346,6 +368,7 @@ export function apply(ctx: HostContext): void {
               merged.mediaDisplay = merged.mediaDisplay === true
             merged.neteaseProxy = String(merged.neteaseProxy ?? '').trim().slice(0, 300)
             merged.neteaseApiBase = String(merged.neteaseApiBase ?? '').trim().slice(0, 300)
+            merged.neteaseRealIp = String(merged.neteaseRealIp ?? '').trim().slice(0, 64)
             const normalized = normalizeHostConfig(merged)
             writeConfig(normalized)
             gcMedia(normalized)
@@ -522,10 +545,14 @@ function contentTypeToExt(contentType: string | undefined, kind: string): string
  * and re-applies the same values from the live config.
  */
 export function bootstrapCss(config: GlassConfig): string {
-  const surface = (rgb: string) =>
-    `rgba(${rgb},${config.opacity})`
+  const surface = (rgb: string, alpha: number = config.opacity) =>
+    `rgba(${rgb},${alpha})`
   const lightSurface = surface('255,255,255')
   const darkSurface = surface('16,16,24')
+  // keep in step with HOVER_DELTA in src/client/engine.ts
+  const hover = Math.min(1, config.opacity + 0.12)
+  // text-bearing surfaces follow their own knob, not the background glass
+  const content = config.contentOpacity
   return [
     ':root{',
     `--glass-opacity:${config.opacity};`,
@@ -540,7 +567,25 @@ export function bootstrapCss(config: GlassConfig): string {
     `--glass-anim-level:${config.animLevel};`,
     `--glass-surface-light:${lightSurface};`,
     `--glass-surface-dark:${darkSurface};`,
+    `--glass-hover-light:${surface('255,255,255', hover)};`,
+    `--glass-hover-dark:${surface('16,16,24', hover)};`,
+    `--glass-solid-light:${surface('255,255,255', content)};`,
+    `--glass-solid-dark:${surface('16,16,24', content)};`,
+    `--glass-panel-light:${surface('255,255,255', content)};`,
+    `--glass-panel-dark:${surface('16,16,24', content)};`,
     '}',
+    // Font weight is deliberately NOT emitted here: the live value can change
+    // while the page is open, and a rule baked into this first-paint style
+    // could not be withdrawn when the user goes back to the default weight.
+    // The client half owns it (see glass.css / engine.ts).
+    // The Desktop caption (minimize / maximize / close) is painted natively
+    // from a color the preload samples off a probe span; neutralizing that
+    // probe makes the caption transparent so the glass shows through. It has
+    // to be here as well as in glass.css: the preload reads the probe on its
+    // first paint, long before the client half activates. See glass.css for
+    // the full explanation.
+    'html[data-windows-titlebar] body > span[style*="var(--dsw-specific-sidebar-fill)"]',
+    '{background-color:rgba(0,0,0,0)!important}',
   ].join('')
 }
 

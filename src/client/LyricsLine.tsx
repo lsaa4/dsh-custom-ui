@@ -20,8 +20,14 @@ export function LyricsLine({ t }: LyricsLineProps): JSX.Element | null {
   const state = useSyncExternalStore(playback.subscribe, playback.getSnapshot)
   const pos = useSyncExternalStore(subscribeLyricPos, getLyricPos)
 
-  if (pos === 'hidden') return null
-  if (state.song === null) return null
+  // The dock row itself has no stable hook of its own (DSH's module class names
+  // are hashed per build), so this component carries the marker the dock plate
+  // walks up from. It has to exist even when there is nothing to sing about —
+  // otherwise the stats row would only get its backing while music plays.
+  const anchor = <span data-dsh-glass-dock-anchor="" hidden />
+
+  if (pos === 'hidden') return anchor
+  if (state.song === null) return anchor
 
   const title = `${state.song.name} - ${state.song.artists || (t !== undefined ? t('lyricUnknownArtist') : '未知歌手')}`
   const line = state.loading
@@ -37,6 +43,7 @@ export function LyricsLine({ t }: LyricsLineProps): JSX.Element | null {
   return (
     <span
       className={styles.root}
+      data-dsh-glass-dock-anchor=""
       data-pos={pos}
       title={`${title}\n${line}`}
     >
